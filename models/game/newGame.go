@@ -16,11 +16,13 @@ func NewGame() Game {
 	g.Board[4][3] = Black
 	g.Board[4][4] = White
 
-	// Initialize first player (Black plays first in Othello)
-	g.CurrentPlayer = Player{
-		Color: Black,
-		Name:  "Black",
-	}
+	// Initialize both players
+	g.Players[0] = Player{Color: Black, Name: "Black"}
+	g.Players[1] = Player{Color: White, Name: "White"}
+
+	// Set Black as the first player
+	g.CurrentPlayer = g.Players[0]
+	g.NbMoves = 0
 
 	return g
 }
