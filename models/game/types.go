@@ -21,6 +21,7 @@ type Player struct {
 }
 
 type Game struct {
-	Board  Board
-	Player Player
+	Board         Board
+	CurrentPlayer Player
+	NbMoves       int
 }
