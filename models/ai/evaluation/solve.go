@@ -5,7 +5,7 @@ import "github.com/Coloc3G/othello-engine/models/game"
 func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Position {
 	bestScore := -1 << 31
 	var bestMove game.Position
-	for _, move := range game.GetAllPossibleMoves(g.Board, player) {
+	for _, move := range game.ValidMoves(g.Board, player) {
 		newNode := game.GetNewBoardAfterMove(g.Board, move, player)
 		childScore := MMAB(g, newNode, player, depth-1, false, -1<<31, 1<<31-1, eval)
 		if childScore > bestScore {
@@ -27,7 +27,7 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 	var score int
 	if max {
 		score = -1 << 31
-		for _, move := range game.GetAllPossibleMoves(node, player) {
+		for _, move := range game.ValidMoves(node, player) {
 			newNode := game.GetNewBoardAfterMove(node, move, player)
 			childScore := MMAB(g, newNode, player, depth-1, false, alpha, beta, eval)
 			if childScore > score {
@@ -42,7 +42,7 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 		}
 	} else {
 		score = 1<<31 - 1
-		for _, move := range game.GetAllPossibleMoves(node, oplayer) {
+		for _, move := range game.ValidMoves(node, oplayer) {
 			newNode := game.GetNewBoardAfterMove(node, move, oplayer)
 			childScore := MMAB(g, newNode, player, depth-1, true, alpha, beta, eval)
 			if childScore < score {
