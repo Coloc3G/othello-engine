@@ -1,5 +1,11 @@
 package game
 
+// NewGame creates and initializes a new Othello game.
+// It sets up the board with the standard initial position where four pieces
+// are placed in the center of the board (two black and two white in a diagonal pattern).
+// The function also initializes both players, sets Black as the first player to move,
+// and initializes the move counter to zero.
+// Returns a ready-to-play Game instance.
 func NewGame() Game {
 	g := Game{}
 

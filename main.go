@@ -14,7 +14,7 @@ func RunGame() {
 	for {
 		// Display current game state
 		fmt.Printf("\nCurrent player: %s\n", g.CurrentPlayer.Name)
-		g.DisplayBoard()
+		g.DisplayBoard(g.Board)
 		fmt.Printf("\nList of valid moves: %v\n", g.GetValidMovesForCurrentPlayer())
 		// Get player move (temporary: just display a message)
 		fmt.Printf("\nWaiting for %s's move...\n", g.CurrentPlayer.Name)
