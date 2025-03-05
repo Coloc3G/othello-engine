@@ -1,7 +1,5 @@
 package game
 
-import "fmt"
-
 // ValidMoves returns all valid moves for a player on a given board
 func ValidMoves(board Board, playerColor Piece) []Position {
 	moves := []Position{}
@@ -159,7 +157,6 @@ func ApplyMoveToBoard(board Board, playerColor Piece, pos Position) (Board, bool
 
 // ApplyMove applies a move to the current game state
 func (g *Game) ApplyMove(pos Position) bool {
-	fmt.Println("Applying move:", pos)
 	newBoard, success := ApplyMoveToBoard(g.Board, g.CurrentPlayer.Color, pos)
 
 	if !success {
