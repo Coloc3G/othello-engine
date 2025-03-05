@@ -20,7 +20,13 @@ type Player struct {
 	Name  string
 }
 
+// Game represents the state of an Othello game.
+// It contains the game board, the two players, the current player's turn,
+// and the number of moves that have been made in the game.
+// This struct is used to maintain the complete state of a game session.
 type Game struct {
-	Board  Board
-	Player Player
+	Board         Board
+	Players       [2]Player
+	CurrentPlayer Player
+	NbMoves       int
 }
