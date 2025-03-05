@@ -1,0 +1,35 @@
+{
+  "generation": 8,
+  "best_fitness": 30,
+  "avg_fitness": 24.75,
+  "best_model": {
+    "coefficients": {
+      "material_coeffs": [
+        30,
+        118,
+        466
+      ],
+      "mobility_coeffs": [
+        37,
+        55,
+        158
+      ],
+      "corners_coeffs": [
+        1073,
+        805,
+        865
+      ],
+      "parity_coeffs": [
+        0,
+        28,
+        754
+      ]
+    },
+    "wins": 30,
+    "losses": 0,
+    "draws": 0,
+    "fitness": 30,
+    "generation": 8
+  },
+  "timestamp": "2025-03-05T22:35:37+01:00"
+}

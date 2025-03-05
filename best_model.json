@@ -1,0 +1,29 @@
+{
+  "coefficients": {
+    "material_coeffs": [
+      30,
+      118,
+      415
+    ],
+    "mobility_coeffs": [
+      37,
+      55,
+      136
+    ],
+    "corners_coeffs": [
+      1073,
+      805,
+      1037
+    ],
+    "parity_coeffs": [
+      0,
+      76,
+      754
+    ]
+  },
+  "wins": 30,
+  "losses": 0,
+  "draws": 0,
+  "fitness": 30,
+  "generation": 2
+}

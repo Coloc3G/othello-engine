@@ -42,7 +42,7 @@ func NewGameScreen(ui *UI) *GameScreen {
 		lastMove:        time.Now(),
 		face:            basicfont.Face7x13,
 		evalHistory:     make([]int, 0),
-		evaluator:       evaluation.NewMixedEvaluation(),
+		evaluator:       evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff),
 		evalChan:        make(chan int, 1), // Buffered channel for evaluation results
 		depthUpdateChan: make(chan int, 1), // Buffered channel for depth updates
 		maxDepth:        10,                // Maximum evaluation depth
@@ -98,9 +98,8 @@ func (s *GameScreen) Update() error {
 		// No evaluation result ready yet
 	}
 
-	// Handle AI moves with a small delay
 	if s.ui.game.CurrentPlayer.Name == "AI" {
-		eval := evaluation.NewMixedEvaluation()
+		eval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
 		pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
 
 		// Apply move and update evaluation
