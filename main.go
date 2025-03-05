@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
@@ -92,21 +93,30 @@ func RunGame() {
 		validInput := false
 
 		for !validInput {
-			fmt.Printf("\nEnter your move in chess notation (e.g. 'E4'): ")
-			input, _ := reader.ReadString('\n')
-			input = strings.TrimSpace(input)
+			var pos game.Position
+			var err error
+			if g.CurrentPlayer.Name == "AI" {
+				// AI player
+				eval := evaluation.NewMixedEvaluation()
+				pos = evaluation.Solve(g, g.CurrentPlayer, 10, eval)
+				fmt.Println("AI move: ", pos)
+			} else {
+				fmt.Printf("\nEnter your move in chess notation (e.g. 'E4'): ")
+				input, _ := reader.ReadString('\n')
+				input = strings.TrimSpace(input)
 
-			// Check for quit command
-			if strings.ToLower(input) == "quit" || strings.ToLower(input) == "exit" {
-				fmt.Println("Game aborted.")
-				return
-			}
+				// Check for quit command
+				if strings.ToLower(input) == "quit" || strings.ToLower(input) == "exit" {
+					fmt.Println("Game aborted.")
+					return
+				}
 
-			// Parse the input
-			pos, err := parseMove(input)
-			if err != nil {
-				fmt.Printf("Error: %s. Please try again.\n", err)
-				continue
+				// Parse the input
+				pos, err = parseMove(input)
+				if err != nil {
+					fmt.Printf("Error: %s. Please try again.\n", err)
+					continue
+				}
 			}
 
 			// Check if the move is valid

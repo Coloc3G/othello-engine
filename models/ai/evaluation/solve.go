@@ -18,7 +18,7 @@ func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Pos
 
 func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool, alpha, beta int, eval Evaluation) int {
 	if depth == 0 || game.IsGameFinished(node) {
-		return eval.Evaluate(node, player)
+		return eval.Evaluate(g, node, player)
 	}
 	oplayer := game.GetOtherPlayer(g.Players, player.Color)
 	if (max && !game.HasAnyMoves(node, player.Color)) || (!max && !game.HasAnyMoves(node, oplayer.Color)) {

@@ -11,9 +11,9 @@ func NewMaterialEvaluation() *MaterialEvaluation {
 }
 
 // Evaluate the given board state and return a score
-func (e *MaterialEvaluation) Evaluate(board game.Board, player game.Player) int {
+func (e *MaterialEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	sum := 0
-	for _, row := range board {
+	for _, row := range b {
 		for _, piece := range row {
 			sum += int(piece)
 		}

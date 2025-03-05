@@ -11,7 +11,7 @@ import "fmt"
 //   - board: The Board to display
 func (g *Game) DisplayBoard(board Board) {
 	// Display column letters (A-H)
-	fmt.Print("  ")
+	fmt.Print("   ")
 	for i := 0; i < 8; i++ {
 		fmt.Printf(" %c", 'A'+i)
 	}

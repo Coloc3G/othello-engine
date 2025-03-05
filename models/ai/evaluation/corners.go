@@ -11,33 +11,33 @@ func NewCornersEvaluation() *CornersEvaluation {
 }
 
 // Evaluate the given board state and return a score
-func (e *CornersEvaluation) Evaluate(board game.Board, player game.Player) int {
+func (e *CornersEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	myCorners := 0
 	opCorners := 0
 
-	if board[0][0] == player.Color {
+	if b[0][0] == player.Color {
 		myCorners++
 	}
-	if board[7][0] == player.Color {
+	if b[7][0] == player.Color {
 		myCorners++
 	}
-	if board[0][7] == player.Color {
+	if b[0][7] == player.Color {
 		myCorners++
 	}
-	if board[7][7] == player.Color {
+	if b[7][7] == player.Color {
 		myCorners++
 	}
 
-	if board[0][0] != player.Color && board[0][0] != game.Empty {
+	if b[0][0] != player.Color && b[0][0] != game.Empty {
 		opCorners++
 	}
-	if board[7][0] != player.Color && board[7][0] != game.Empty {
+	if b[7][0] != player.Color && b[7][0] != game.Empty {
 		opCorners++
 	}
-	if board[0][7] != player.Color && board[0][7] != game.Empty {
+	if b[0][7] != player.Color && b[0][7] != game.Empty {
 		opCorners++
 	}
-	if board[7][7] != player.Color && board[7][7] != game.Empty {
+	if b[7][7] != player.Color && b[7][7] != game.Empty {
 		opCorners++
 	}
 

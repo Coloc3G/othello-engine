@@ -11,6 +11,12 @@ func NewMobilityEvaluation() *MobilityEvaluation {
 }
 
 // Evaluate the given board state and return a score
-func (e *MobilityEvaluation) Evaluate(board game.Board, player game.Player) int {
-	return 0
+func (e *MobilityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
+
+	opponent := game.GetOtherPlayer(g.Players, player.Color)
+
+	myMoveCount := len(game.ValidMoves(b, player.Color))
+	opMoveCount := len(game.ValidMoves(b, opponent.Color))
+
+	return 100 * (myMoveCount - opMoveCount) / (myMoveCount + opMoveCount + 1)
 }

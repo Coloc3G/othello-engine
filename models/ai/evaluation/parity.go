@@ -10,9 +10,9 @@ func NewParityEvaluation() *ParityEvaluation {
 }
 
 // Evaluate the given board state and return a score
-func (e *ParityEvaluation) Evaluate(board game.Board, player game.Player) int {
+func (e *ParityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	piecesCount := 0
-	for _, row := range board {
+	for _, row := range b {
 		for _, piece := range row {
 			if piece != game.Empty {
 				piecesCount++
