@@ -9,6 +9,8 @@ import (
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
+	"github.com/Coloc3G/othello-engine/models/opening"
+	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
 // parseMove parses user input to extract the row and column coordinates
@@ -97,9 +99,22 @@ func RunGame() {
 			var err error
 			if g.CurrentPlayer.Name == "AI" {
 				// AI player
-				eval := evaluation.NewMixedEvaluation()
-				pos = evaluation.Solve(g, g.CurrentPlayer, 10, eval)
-				fmt.Println("AI move: ", pos)
+				openingFound := false
+				if matches := opening.MatchOpening(utils.PositionsToAlgebraic(g.History)); len(matches) > 0 {
+					maxL := 0
+					for _, match := range matches {
+						if len(match.Transcript) > 2*len(g.History) && len(match.Transcript) > maxL {
+							maxL = len(match.Transcript)
+							pos = utils.AlgebraicToPositions(match.Transcript)[len(g.History)]
+							openingFound = true
+						}
+					}
+				}
+				if !openingFound {
+					eval := evaluation.NewMixedEvaluation()
+					pos = evaluation.Solve(g, g.CurrentPlayer, 5, eval)
+				}
+				fmt.Println("AI move: ", utils.PositionToAlgebraic(pos))
 			} else {
 				fmt.Printf("\nEnter your move in chess notation (e.g. 'E4'): ")
 				input, _ := reader.ReadString('\n')

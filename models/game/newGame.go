@@ -23,7 +23,7 @@ func NewGame() Game {
 	g.Board[4][4] = White
 
 	// Initialize both players
-	g.Players[0] = Player{Color: Black, Name: "Black"}
+	g.Players[0] = Player{Color: Black, Name: "AI"}
 	g.Players[1] = Player{Color: White, Name: "AI"}
 
 	// Set Black as the first player

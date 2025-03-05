@@ -29,4 +29,5 @@ type Game struct {
 	Players       [2]Player
 	CurrentPlayer Player
 	NbMoves       int
+	History       []Position
 }
