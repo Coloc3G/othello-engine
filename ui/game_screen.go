@@ -31,8 +31,10 @@ type GameScreen struct {
 	evalChan        chan int                    // Channel for receiving evaluation results
 	evaluating      bool                        // Flag to track if evaluation is in progress
 	currentDepth    int                         // Current evaluation depth
+	resultDepth     int                         // Depth of the current evaluation result
 	maxDepth        int                         // Maximum evaluation depth
 	depthUpdateChan chan int                    // Channel for receiving depth updates
+	evalCancelChan  chan struct{}               // Channel for cancelling ongoing evaluations
 }
 
 // NewGameScreen creates a new game screen
@@ -43,9 +45,10 @@ func NewGameScreen(ui *UI) *GameScreen {
 		face:            basicfont.Face7x13,
 		evalHistory:     make([]int, 0),
 		evaluator:       evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff),
-		evalChan:        make(chan int, 1), // Buffered channel for evaluation results
-		depthUpdateChan: make(chan int, 1), // Buffered channel for depth updates
-		maxDepth:        10,                // Maximum evaluation depth
+		evalChan:        make(chan int, 1),      // Buffered channel for evaluation results
+		depthUpdateChan: make(chan int, 1),      // Buffered channel for depth updates
+		evalCancelChan:  make(chan struct{}, 1), // Buffered channel for cancellation signal
+		maxDepth:        5,                      // Maximum evaluation depth
 	}
 }
 
@@ -88,6 +91,7 @@ func (s *GameScreen) Update() error {
 	select {
 	case evalResult := <-s.evalChan:
 		s.evaluationValue = evalResult
+		s.resultDepth = s.currentDepth // Store the depth of this evaluation result
 		s.evalHistory = append(s.evalHistory, evalResult)
 
 		// Cap history size to prevent memory issues
@@ -259,6 +263,16 @@ func min(a, b int) int {
 
 // updateEvaluation starts an asynchronous progressive depth evaluation
 func (s *GameScreen) updateEvaluation() {
+	// Cancel any ongoing evaluation
+	if s.evaluating {
+		select {
+		case s.evalCancelChan <- struct{}{}:
+			// Signal sent successfully
+		default:
+			// Channel already has a signal, no need to send another one
+		}
+	}
+
 	// Start the progressive evaluation process
 	s.evaluating = true
 	s.currentDepth = 1 // Reset depth counter
@@ -269,11 +283,20 @@ func (s *GameScreen) updateEvaluation() {
 	// Always evaluate from black's perspective for consistency
 	player := s.ui.game.Players[0]
 
+	// Create a new evaluation cycle
 	go func() {
 		defer func() { s.evaluating = false }()
 
 		// Start with shallow depth and progressively increase
 		for depth := 2; depth <= s.maxDepth; depth += 1 {
+			// Check if we should cancel this evaluation
+			select {
+			case <-s.evalCancelChan:
+				return // Stop evaluating
+			default:
+				// Continue evaluation
+			}
+
 			// Update the current depth
 			select {
 			case s.depthUpdateChan <- depth:
@@ -292,18 +315,24 @@ func (s *GameScreen) updateEvaluation() {
 				1<<31-1, // beta
 				s.evaluator)
 
-			// Send result through channel - non-blocking
+			// Check again if we should cancel before sending result
 			select {
-			case s.evalChan <- evalScore:
-				// Successfully sent
+			case <-s.evalCancelChan:
+				return // Stop evaluating and don't send result
 			default:
-				// Channel full, clear it and send new value
+				// Send the result
 				select {
-				case <-s.evalChan: // Discard old value
+				case s.evalChan <- evalScore:
+					// Successfully sent
 				default:
-					// Channel was already empty
+					// Channel full, clear it and send new value
+					select {
+					case <-s.evalChan: // Discard old value
+					default:
+						// Channel was already empty
+					}
+					s.evalChan <- evalScore
 				}
-				s.evalChan <- evalScore
 			}
 
 			// Small sleep to prevent CPU hogging and allow UI updates
@@ -368,9 +397,9 @@ func (s *GameScreen) drawEvaluationBar(screen *ebiten.Image) {
 	// Draw evaluation text with depth information
 	var evalText string
 	if s.evaluating {
-		evalText = fmt.Sprintf("%+d d:%d", s.evaluationValue, s.currentDepth)
+		evalText = fmt.Sprintf("%+d d:%d/%d", s.evaluationValue, s.resultDepth, s.currentDepth)
 	} else {
-		evalText = fmt.Sprintf("%+d", s.evaluationValue)
+		evalText = fmt.Sprintf("%+d d:%d", s.evaluationValue, s.resultDepth)
 	}
 
 	textBounds := text.BoundString(s.face, evalText)
