@@ -11,6 +11,8 @@ import (
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
+	"github.com/Coloc3G/othello-engine/models/opening"
+	"github.com/Coloc3G/othello-engine/models/utils"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -40,8 +42,8 @@ func NewTrainer(popSize int) *Trainer {
 	return &Trainer{
 		Models:         make([]EvaluationModel, 0),
 		PopulationSize: popSize,
-		MutationRate:   0.1,
-		NumGames:       50,
+		MutationRate:   0.2,
+		NumGames:       100,
 		MaxDepth:       5,
 		Generation:     1,
 	}
@@ -166,6 +168,24 @@ func (t *Trainer) evaluatePopulation() {
 	fmt.Println() // Add newline after progress bar completes
 }
 
+// applyRandomOpening selects a random opening and applies it to the game
+func applyOpening(g *game.Game, o opening.Opening) {
+	transcript := o.Transcript
+
+	// Apply the moves from the opening transcript
+	for i := 0; i < len(transcript); i += 2 {
+		if i+1 >= len(transcript) {
+			break // Ensure we have a complete move (row and column)
+		}
+
+		move := utils.AlgebraicToPosition(transcript[i : i+2])
+
+		// Apply the move
+		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer)
+		g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+	}
+}
+
 // evaluateModel evaluates a single model by playing games against reference players
 func (t *Trainer) evaluateModel(model *EvaluationModel, numGames int) {
 	// Reset statistics
@@ -177,56 +197,62 @@ func (t *Trainer) evaluateModel(model *EvaluationModel, numGames int) {
 	evalFunc := t.createEvaluationFromModel(*model)
 
 	// Use a standard evaluation for opponent
-	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
+	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
 
-	for i := 0; i < numGames; i++ {
-		// Create a new game
-		g := game.NewGame("AI", "AI")
+	for _, o := range opening.KNOWN_OPENINGS {
+		for i := 0; i < 2; i++ {
 
-		// Alternate who plays first
-		playerModel := &g.Players[i%2]
+			// Create a new game
+			g := game.NewGame("AI", "AI")
 
-		// Play the game
-		for !game.IsGameFinished(g.Board) {
-			if g.CurrentPlayer.Color == playerModel.Color {
-				// Model player's turn
-				if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-					pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
-					g.ApplyMove(pos)
+			// Apply opening
+			applyOpening(g, o)
+
+			// Alternate who plays first
+			playerModel := &g.Players[i%2]
+
+			// Play the game
+			for !game.IsGameFinished(g.Board) {
+				if g.CurrentPlayer.Color == playerModel.Color {
+					// Model player's turn
+					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
+						pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+						g.ApplyMove(pos)
+					} else {
+						// Skip turn if no valid moves
+						g.CurrentPlayer = g.GetOtherPlayerMethod()
+					}
 				} else {
-					// Skip turn if no valid moves
-					g.CurrentPlayer = g.GetOtherPlayerMethod()
+					// Standard player's turn
+					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
+						pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, standardEval)
+						g.ApplyMove(pos)
+					} else {
+						// Skip turn if no valid moves
+						g.CurrentPlayer = g.GetOtherPlayerMethod()
+					}
 				}
-			} else {
-				// Standard player's turn
-				if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-					pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, standardEval)
-					g.ApplyMove(pos)
-				} else {
-					// Skip turn if no valid moves
-					g.CurrentPlayer = g.GetOtherPlayerMethod()
-				}
+
 			}
 
-		}
-
-		// Determine winner
-		blackCount, whiteCount := game.CountPieces(g.Board)
-		if playerModel.Color == game.Black {
-			if blackCount > whiteCount {
-				model.Wins++
-			} else if blackCount < whiteCount {
-				model.Losses++
+			// Determine winner
+			blackCount, whiteCount := game.CountPieces(g.Board)
+			if playerModel.Color == game.Black {
+				if blackCount > whiteCount {
+					model.Wins++
+				} else if blackCount < whiteCount {
+					model.Losses++
+				} else {
+					model.Draws++
+				}
 			} else {
-				model.Draws++
-			}
-		} else {
-			if whiteCount > blackCount {
-				model.Wins++
-			} else if whiteCount < blackCount {
-				model.Losses++
-			} else {
-				model.Draws++
+				if whiteCount > blackCount {
+					model.Wins++
+				} else if whiteCount < blackCount {
+					model.Losses++
+				} else {
+					model.Draws++
+				}
 			}
 		}
 

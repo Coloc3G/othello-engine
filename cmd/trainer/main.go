@@ -8,15 +8,20 @@ import (
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/learning"
+	"github.com/Coloc3G/othello-engine/test"
 )
 
 func main() {
 	// Parse command line arguments
 	generations := flag.Int("generations", 10, "Number of generations to train")
-	populationSize := flag.Int("population", 20, "Population size")
+	populationSize := flag.Int("population", 30, "Population size")
 	loadFile := flag.String("load", "", "Load existing model file")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")
 	tournamentMode := flag.Bool("tournament", false, "Use tournament mode for training")
+	compareVersions := flag.Bool("compare", false, "Compare coefficient versions")
+	compareGames := flag.Int("compare-games", 200, "Number of games for version comparison")
+	compareDepth := flag.Int("compare-depth", 5, "Search depth for version comparison")
+	useOpenings := flag.Bool("openings", true, "Use random openings in comparisons")
 	flag.Parse()
 
 	// Set GOMAXPROCS to control parallelism
@@ -24,6 +29,16 @@ func main() {
 
 	fmt.Println("Othello AI Trainer")
 	fmt.Printf("Running with %d threads\n", *threads)
+
+	// If comparison mode is enabled, run comparison and exit
+	if *compareVersions {
+		if *useOpenings {
+			test.CompareVersionsWithOpenings(*compareGames, *compareDepth)
+		} else {
+			test.CompareVersions(*compareGames, *compareDepth)
+		}
+		return
+	}
 
 	// Record start time
 	startTime := time.Now()

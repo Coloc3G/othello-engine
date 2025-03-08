@@ -11,11 +11,11 @@ var (
 	}
 
 	V2Coeff = EvaluationCoefficients{
-		MaterialCoeffs:  []int{30, 118, 466},
-		MobilityCoeffs:  []int{13, 94, 158},
-		CornersCoeffs:   []int{1201, 805, 865},
-		ParityCoeffs:    []int{0, 28, 754},
-		StabilityCoeffs: []int{0, 0, 0},
-		FrontierCoeffs:  []int{0, 0, 0},
+		MaterialCoeffs:  []int{51, 242, 440},
+		MobilityCoeffs:  []int{69, 177, 167},
+		CornersCoeffs:   []int{1123, 759, 467},
+		ParityCoeffs:    []int{100, 3, 964},
+		StabilityCoeffs: []int{0, 21, 85},
+		FrontierCoeffs:  []int{0, 86, 0},
 	}
 )
