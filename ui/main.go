@@ -92,7 +92,7 @@ func (g *Game) handlePlayerVsAIMode() {
 		if row >= 0 && row < gridSize && col >= 0 && col < gridSize {
 			moveSuccess := g.othello.ApplyMove(game.Position{Row: row, Col: col})
 			if moveSuccess {
-				bestMove := evaluation.Solve(g.othello, g.othello.CurrentPlayer, 3, &g.eval)
+				bestMove := evaluation.Solve(g.othello, g.othello.CurrentPlayer, 5, &g.eval)
 				g.othello.ApplyMove(bestMove)
 			}
 		}
