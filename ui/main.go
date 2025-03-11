@@ -4,78 +4,101 @@ import (
 	"image/color"
 	"log"
 
+	"github.com/yourusername/othello/game" // Import de ton moteur Othello
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font/basicfont"
 )
 
 const (
 	screenWidth  = 600
 	screenHeight = 600
 	gridSize     = 8
-	cellSize     = screenWidth / gridSize // 600 / 8 = 75 px
+	cellSize     = screenWidth / gridSize // Chaque case fait 75x75 px
 )
 
 // États du jeu
 const (
-	GameStateMenu    = 0 // Page d'accueil
-	GameStatePlaying = 1 // Jeu en cours
+	GameStatePlaying = 0 // En cours
+	GameStateEnded   = 1 // Fin de partie
 )
-
-// Bouton "Jouer"
-var buttonX, buttonY = 200, 350         // Position du bouton
-var buttonWidth, buttonHeight = 200, 50 // Taille du bouton
 
 // Game représente l'état du jeu
 type Game struct {
-	state int // État actuel du jeu (Menu ou Jeu)
+	state      int       // État du jeu
+	othello    game.Game // Instance du moteur Othello
+	winnerText string    // Texte du gagnant
 }
 
 // Update gère la logique du jeu
 func (g *Game) Update() error {
-	// Vérifier si on clique sur le bouton
-	if g.state == GameStateMenu && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if g.state == GameStateEnded {
+		return nil
+	}
+
+	// Gestion du clic pour jouer un coup
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
-		if x >= buttonX && x <= buttonX+buttonWidth && y >= buttonY && y <= buttonY+buttonHeight {
-			g.state = GameStatePlaying
+		row := y / cellSize
+		col := x / cellSize
+
+		// Tenter de jouer le coup
+		moveSuccess := g.othello.ApplyMove(game.Position{Row: row, Col: col})
+
+		if moveSuccess {
+			// Si le coup est valide, l'IA joue après le joueur
+			g.othello.ApplyMove(g.othello.GetValidMovesForCurrentPlayer()[0])
+		}
+
+		// Vérifier si la partie est finie
+		if g.othello.IsGameFinishedMethod() {
+			g.state = GameStateEnded
+			winner := g.othello.GetWinnerMethod()
+			if winner == game.Black {
+				g.winnerText = "Le joueur noir gagne !"
+			} else if winner == game.White {
+				g.winnerText = "Le joueur blanc gagne !"
+			} else {
+				g.winnerText = "Match nul !"
+			}
 		}
 	}
 	return nil
 }
 
-// Draw dessine l'écran selon l'état du jeu
+// Draw dessine la grille et les pions
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.state == GameStateMenu {
-		g.drawMenu(screen) // Afficher le menu
-	} else {
-		g.drawBoard(screen) // Afficher la grille
+	g.drawBoard(screen)
+	g.drawPieces(screen)
+
+	// Affichage du gagnant si la partie est terminée
+	if g.state == GameStateEnded {
+		ebitenutil.DebugPrint(screen, g.winnerText+"\nAppuyez sur R pour recommencer")
 	}
 }
 
-// drawMenu dessine la page d'accueil avec le bouton "Jouer"
-func (g *Game) drawMenu(screen *ebiten.Image) {
-	// Titre du jeu en grand
-	titleText := "OTHELLO GAME"
-	titleFont := basicfont.Face7x13 // Simple police bitmap intégrée
-	text.Draw(screen, titleText, titleFont, 250, 250, color.White)
-
-	// Dessiner le bouton
-	ebitenutil.DrawRect(screen, float64(buttonX), float64(buttonY), float64(buttonWidth), float64(buttonHeight), color.RGBA{0, 255, 0, 255})
-
-	// Texte du bouton "Jouer"
-	text.Draw(screen, "JOUER", titleFont, buttonX+60, buttonY+30, color.Black)
-}
-
-// drawBoard dessine la grille du jeu
+// drawBoard dessine la grille
 func (g *Game) drawBoard(screen *ebiten.Image) {
 	gridColor := color.RGBA{0, 255, 0, 255} // Vert
 
-	// Dessine la grille
 	for i := 0; i <= gridSize; i++ {
-		ebitenutil.DrawLine(screen, 0, float64(i*cellSize), screenWidth, float64(i*cellSize), gridColor)  // Lignes horizontales
-		ebitenutil.DrawLine(screen, float64(i*cellSize), 0, float64(i*cellSize), screenHeight, gridColor) // Lignes verticales
+		ebitenutil.DrawLine(screen, 0, float64(i*cellSize), screenWidth, float64(i*cellSize), gridColor)
+		ebitenutil.DrawLine(screen, float64(i*cellSize), 0, float64(i*cellSize), screenHeight, gridColor)
+	}
+}
+
+// drawPieces dessine les pions Othello
+func (g *Game) drawPieces(screen *ebiten.Image) {
+	for row := 0; row < gridSize; row++ {
+		for col := 0; col < gridSize; col++ {
+			switch g.othello.Board[row][col] {
+			case game.Black:
+				ebitenutil.DrawRect(screen, float64(col*cellSize+10), float64(row*cellSize+10), 55, 55, color.Black)
+			case game.White:
+				ebitenutil.DrawRect(screen, float64(col*cellSize+10), float64(row*cellSize+10), 55, 55, color.White)
+			}
+		}
 	}
 }
 
@@ -88,7 +111,7 @@ func main() {
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Othello - Ebiten")
 
-	game := &Game{state: GameStateMenu} // Démarre sur le menu
+	game := &Game{state: GameStatePlaying, othello: game.NewGame()} // Démarre une nouvelle partie
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
