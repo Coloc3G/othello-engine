@@ -1,0 +1,45 @@
+{
+  "generation": 2,
+  "best_fitness": 145.5,
+  "avg_fitness": 136.43333333333334,
+  "best_model": {
+    "coefficients": {
+      "material_coeff": [
+        51,
+        242,
+        440
+      ],
+      "mobility_coeff": [
+        69,
+        177,
+        167
+      ],
+      "corners_coeff": [
+        1123,
+        759,
+        467
+      ],
+      "parity_coeff": [
+        100,
+        3,
+        964
+      ],
+      "stability_coeff": [
+        0,
+        21,
+        85
+      ],
+      "frontier_coeff": [
+        0,
+        86,
+        0
+      ]
+    },
+    "wins": 142,
+    "losses": 67,
+    "draws": 7,
+    "fitness": 145.5,
+    "generation": 2
+  },
+  "timestamp": "2025-03-08T22:16:19+01:00"
+}
