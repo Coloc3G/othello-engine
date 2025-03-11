@@ -14,40 +14,49 @@ import (
 
 const (
 	screenWidth  = 600
-	screenHeight = 700 // Augmenté pour le titre
+	screenHeight = 700 // Augmenté pour inclure le titre
 	gridSize     = 8
-	cellSize     = screenWidth / gridSize // Chaque case fait 75x75 px
+	cellSize     = screenWidth / gridSize // Taille des cases
 )
 
 // États du jeu
 const (
-	GameStateMenu    = 0 // Page d'accueil
-	GameStatePlaying = 1 // Partie Joueur vs IA
-	GameStateIAvsIA  = 2 // Mode IA contre IA
-	GameStateEnded   = 3 // Fin de partie
+	GameStateMenu    = 0
+	GameStatePlaying = 1
+	GameStateIAvsIA  = 2
+	GameStateEnded   = 3
 )
 
 // Coordonnées des boutons
 var (
 	buttonX      = 200
-	buttonY1     = 400 // Position du bouton "Jouer contre l'IA"
-	buttonY2     = 500 // Position du bouton "IA contre IA"
+	buttonY1     = 400
+	buttonY2     = 500
 	buttonWidth  = 200
 	buttonHeight = 50
 )
 
 // Game représente l'état du jeu
 type Game struct {
-	state      int                        // État du jeu
-	othello    game.Game                  // Instance du moteur Othello
-	winnerText string                     // Texte du gagnant
-	eval       evaluation.MixedEvaluation // IA utilisant plusieurs heuristiques
-	lastMove   time.Time                  // Pour gérer le délai en mode IA vs IA
+	state      int
+	othello    game.Game
+	winnerText string
+	eval       evaluation.MixedEvaluation
+	lastMove   time.Time
 }
 
-// Layout définit la taille de l'écran
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+// handleMenuClick gère les clics dans le menu principal
+func (g *Game) handleMenuClick() {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+		if x >= buttonX && x <= buttonX+buttonWidth {
+			if y >= buttonY1 && y <= buttonY1+buttonHeight {
+				g.state = GameStatePlaying
+			} else if y >= buttonY2 && y <= buttonY2+buttonHeight {
+				g.state = GameStateIAvsIA
+			}
+		}
+	}
 }
 
 // Update gère la logique du jeu
@@ -67,23 +76,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
-// Gère le clic sur les boutons de la page d'accueil
-func (g *Game) handleMenuClick() {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		if x >= buttonX && x <= buttonX+buttonWidth {
-			if y >= buttonY1 && y <= buttonY1+buttonHeight {
-				g.state = GameStatePlaying
-			}
-			if y >= buttonY2 && y <= buttonY2+buttonHeight {
-				g.state = GameStateIAvsIA
-				g.lastMove = time.Now() // Initialisation du timer
-			}
-		}
-	}
-}
-
-// Mode Joueur vs IA
+// Mode Joueur vs IA avec gestion du tour bloqué
 func (g *Game) handlePlayerVsAIMode() {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
@@ -92,23 +85,36 @@ func (g *Game) handlePlayerVsAIMode() {
 		if row >= 0 && row < gridSize && col >= 0 && col < gridSize {
 			moveSuccess := g.othello.ApplyMove(game.Position{Row: row, Col: col})
 			if moveSuccess {
-				bestMove := evaluation.Solve(g.othello, g.othello.CurrentPlayer, 5, &g.eval)
-				g.othello.ApplyMove(bestMove)
+				g.handleTurnSwitch()
 			}
 		}
 	}
 	g.checkGameEnd()
 }
 
-// Mode IA contre IA (avec délai)
+// Mode IA contre IA avec délai et gestion des tours bloqués
 func (g *Game) handleIAvsIAMode() {
 	if time.Since(g.lastMove) < time.Second {
 		return
 	}
-	bestMove := evaluation.Solve(g.othello, g.othello.CurrentPlayer, 3, &g.eval)
-	g.othello.ApplyMove(bestMove)
+	g.handleTurnSwitch()
 	g.lastMove = time.Now()
 	g.checkGameEnd()
+}
+
+// Gestion du passage de tour si bloqué
+func (g *Game) handleTurnSwitch() {
+	// Vérifier si le joueur suivant a des coups valides
+	validMoves := g.othello.GetValidMovesForCurrentPlayer()
+	if len(validMoves) > 0 {
+		// IA joue le meilleur coup si possible
+		bestMove := evaluation.Solve(g.othello, g.othello.CurrentPlayer, 5, &g.eval)
+		g.othello.ApplyMove(bestMove)
+	} else {
+		// Aucun coup valide → On passe au joueur suivant
+		otherPlayer := game.GetOtherPlayer(g.othello.Players, g.othello.CurrentPlayer.Color)
+		g.othello.CurrentPlayer = otherPlayer
+	}
 }
 
 // Vérifie si la partie est finie
@@ -152,8 +158,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Affiche la page d'accueil
 func (g *Game) drawMenu(screen *ebiten.Image) {
 	g.drawTitle(screen)
-
-	// Dessiner les boutons
 	g.drawButton(screen, buttonX, buttonY1, "Jouer contre l'IA")
 	g.drawButton(screen, buttonX, buttonY2, "IA contre IA")
 }
@@ -171,7 +175,7 @@ func (g *Game) drawButton(screen *ebiten.Image, x, y int, text string) {
 
 // Dessine la grille
 func (g *Game) drawBoard(screen *ebiten.Image) {
-	boardColor := color.RGBA{50, 205, 50, 255} // Vert plus agréable
+	boardColor := color.RGBA{50, 205, 50, 255} // Vert agréable
 	ebitenutil.DrawRect(screen, 0, 100, float64(screenWidth), float64(screenWidth), boardColor)
 
 	gridColor := color.RGBA{0, 0, 0, 255}
@@ -194,6 +198,11 @@ func (g *Game) drawPieces(screen *ebiten.Image) {
 			}
 		}
 	}
+}
+
+// Layout définit la taille de l'écran (NÉCESSAIRE POUR EBITEN)
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
 }
 
 func main() {
