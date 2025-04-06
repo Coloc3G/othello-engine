@@ -32,12 +32,15 @@ type MixedEvaluation struct {
 
 // Coefficients structure for serialization
 type EvaluationCoefficients struct {
+	// Coefficients for different evaluation functions
 	MaterialCoeffs  []int `json:"material_coeff"`
 	MobilityCoeffs  []int `json:"mobility_coeff"`
 	CornersCoeffs   []int `json:"corners_coeff"`
 	ParityCoeffs    []int `json:"parity_coeff"`
 	StabilityCoeffs []int `json:"stability_coeff"`
 	FrontierCoeffs  []int `json:"frontier_coeff"`
+	// Name of the coefficients set
+	Name string `json:"name"`
 }
 
 func NewMixedEvaluation() *MixedEvaluation {
@@ -94,15 +97,17 @@ func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEva
 	}
 }
 
-// Evaluate the given board state and return a score
+// Evaluate implements the Evaluation interface for MixedEvaluation
 func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
-	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
-	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
-	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
+
+	// Get all raw evaluation scores without normalization to match CUDA implementation
+	materialScore := e.MaterialEvaluation.rawEvaluate(b, player)
+	mobilityScore := e.MobilityEvaluation.rawEvaluate(b, player)
+	cornersScore := e.CornersEvaluation.rawEvaluate(b, player)
 	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
 	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
+	frontierScore := e.FrontierEvaluation.rawEvaluate(b, player)
 
 	return materialCoeff*materialScore +
 		mobilityCoeff*mobilityScore +

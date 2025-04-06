@@ -197,6 +197,16 @@ func (s *GameScreen) Update() error {
 
 	// Handle human vs AI mode
 	if s.ui.game.CurrentPlayer.Name == "Human" {
+	if s.ui.game.CurrentPlayer.Name == "AI" {
+		eval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
+		pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
+		// Apply move and update evaluation
+		if s.ui.game.ApplyMove(pos) {
+			fmt.Println(utils.PositionToAlgebraic(pos))
+			s.updateEvaluation()
+			s.lastMove = time.Now()
+		}
+	} else {
 		// Handle mouse input
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
@@ -596,7 +606,8 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 				true,    // maximizing
 				-1<<31,  // alpha
 				1<<31-1, // beta
-				s.evaluator)
+				s.evaluator,
+				nil) // Pass nil for performance stats since we don't track them in the UI
 
 			// Check again if we should cancel before sending result
 			select {

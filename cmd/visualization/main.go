@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
-	"github.com/Coloc3G/othello-engine/test"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
@@ -59,7 +58,7 @@ func runAllComparisons(numGames, searchDepth int, useOpenings bool) []Performanc
 
 	// Compare V1 vs V2
 	fmt.Println("Comparing V1 vs V2...")
-	v1v2Stats := test.CompareCoefficients(evaluation.V1Coeff, evaluation.V2Coeff, numGames, searchDepth)
+	v1v2Stats := CompareCoefficients(evaluation.V1Coeff, evaluation.V2Coeff, numGames, searchDepth)
 	results = append(results, PerformanceResult{
 		Version1Name:   "V1",
 		Version2Name:   "V2",
@@ -71,7 +70,7 @@ func runAllComparisons(numGames, searchDepth int, useOpenings bool) []Performanc
 		Version2WinPct: v1v2Stats.Version2WinPct,
 		DrawPct:        v1v2Stats.DrawPct,
 	})
-	test.PrintComparison(v1v2Stats)
+	PrintComparison(v1v2Stats)
 
 	return results
 }

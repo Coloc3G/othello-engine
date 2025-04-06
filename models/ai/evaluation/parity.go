@@ -9,15 +9,31 @@ func NewParityEvaluation() *ParityEvaluation {
 	return &ParityEvaluation{}
 }
 
-// Evaluate the given board state and return a score
+// Evaluate computes the parity score
 func (e *ParityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	piecesCount := 0
-	for _, row := range b {
-		for _, piece := range row {
-			if piece != game.Empty {
-				piecesCount++
+	// Count empty squares
+	emptyCount := 0
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if b[i][j] == game.Empty {
+				emptyCount++
 			}
 		}
 	}
-	return (piecesCount%2)*2 - 1
+
+	// Determine parity advantage based on player color and empty square count
+	// Match the CUDA implementation exactly
+	if emptyCount%2 == 0 {
+		if player.Color == game.Black {
+			return -1
+		} else {
+			return 1
+		}
+	} else {
+		if player.Color == game.Black {
+			return 1
+		} else {
+			return -1
+		}
+	}
 }
