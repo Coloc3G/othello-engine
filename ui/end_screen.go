@@ -57,7 +57,7 @@ func (s *EndScreen) Update() error {
 
 	// Handle button click
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && s.buttonHover {
-		s.ui.NewGame()
+		s.ui.SwitchToHomeScreen()
 	}
 
 	return nil
@@ -133,14 +133,9 @@ func (s *EndScreen) Draw(screen *ebiten.Image) {
 		buttonColor)
 
 	// Draw button text
-	buttonText := "New Game"
+	buttonText := "Main Menu"
 	btnBounds := text.BoundString(s.face, buttonText)
 	btnTextX := s.buttonBounds[0] + (s.buttonBounds[2]-btnBounds.Dx())/2
 	btnTextY := s.buttonBounds[1] + (s.buttonBounds[3]+btnBounds.Dy())/2
 	text.Draw(screen, buttonText, s.face, btnTextX, btnTextY, color.White)
-}
-
-// RestartGame creates a new game with the same players
-func (s *UI) RestartGame() {
-	s.NewGame()
 }

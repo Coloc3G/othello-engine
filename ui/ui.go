@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -9,17 +11,26 @@ import (
 type AppState int
 
 const (
-	StateStart AppState = iota
+	StateHome AppState = iota
+	StateAISelection
+	StateDualAISelection
 	StateGame
 	StateEnd
 )
 
 // UI manages the game UI
 type UI struct {
-	game          *game.Game
-	gameScreen    *GameScreen
-	resultScreen  *ResultScreen
-	currentScreen Screen
+	game                  *game.Game
+	homeScreen            *HomeScreen
+	aiSelectionScreen     *AISelectionScreen
+	dualAISelectionScreen *DualAISelectionScreen
+	gameScreen            *GameScreen
+	resultScreen          *ResultScreen
+	endScreen             *EndScreen
+	currentScreen         Screen
+	aivsAiMode            bool
+	aivsAiTimer           time.Time
+	aivsAiMoveDelay       time.Duration
 }
 
 // Screen interface for different game screens
@@ -49,30 +60,102 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 // NewUI creates a new UI
 func NewUI(g *game.Game) *UI {
 	ui := &UI{
-		game: g,
+		game:            g,
+		aivsAiMoveDelay: time.Second, // 1 second delay between AI moves
+		aivsAiMode:      false,
 	}
+
+	// Create all screens
+	ui.homeScreen = NewHomeScreen(ui)
+	ui.aiSelectionScreen = NewAISelectionScreen(ui)
+	ui.dualAISelectionScreen = NewDualAISelectionScreen(ui)
 	ui.gameScreen = NewGameScreen(ui)
 	ui.resultScreen = NewResultScreen(ui)
-	ui.currentScreen = ui.gameScreen
+	ui.endScreen = NewEndScreen(ui)
+
+	// Set initial screen to home screen
+	ui.currentScreen = ui.homeScreen
 
 	return ui
 }
 
+// SwitchToHomeScreen switches to the home screen
+func (s *UI) SwitchToHomeScreen() {
+	s.currentScreen = s.homeScreen
+}
+
+// SwitchToAISelectionScreen switches to the AI selection screen
+func (s *UI) SwitchToAISelectionScreen() {
+	s.currentScreen = s.aiSelectionScreen
+}
+
+// SwitchToDualAISelectionScreen switches to the dual AI selection screen
+func (s *UI) SwitchToDualAISelectionScreen() {
+	s.currentScreen = s.dualAISelectionScreen
+}
+
+// StartPlayerVsAIGame starts a game with a human player against the selected AI
+func (s *UI) StartPlayerVsAIGame(aiVersion int) {
+	// Create game with human player vs AI
+	s.game = game.NewGame("Human", getAIVersionName(aiVersion))
+	s.aivsAiMode = false
+
+	// Reset the game screen
+	if s.gameScreen != nil {
+		s.gameScreen.lastMovePos = game.Position{Row: -1, Col: -1}
+		s.gameScreen.moveHistory = make([][2]MoveRecord, 0)
+		s.gameScreen.scrollOffset = 0
+	}
+
+	s.currentScreen = s.gameScreen
+}
+
+// StartAIVsAIGame starts a game with two AI players
+func (s *UI) StartAIVsAIGame(ai1Version, ai2Version int) {
+	// Create game with AI vs AI
+	s.game = game.NewGame(
+		getAIVersionName(ai1Version),
+		getAIVersionName(ai2Version),
+	)
+	s.aivsAiMode = true
+	s.aivsAiTimer = time.Now()
+
+	// Reset the game screen
+	if s.gameScreen != nil {
+		s.gameScreen.lastMovePos = game.Position{Row: -1, Col: -1}
+		s.gameScreen.moveHistory = make([][2]MoveRecord, 0)
+		s.gameScreen.scrollOffset = 0
+	}
+
+	s.currentScreen = s.gameScreen
+}
+
 // EndGame switches to the result screen
 func (ui *UI) EndGame() {
-	ui.currentScreen = ui.resultScreen
+	ui.currentScreen = ui.endScreen
 }
 
 // NewGame starts a new game
 func (ui *UI) NewGame() {
-	ui.game = game.NewGame(ui.game.Players[0].Name, ui.game.Players[1].Name)
-	ui.currentScreen = ui.gameScreen
+	ui.SwitchToHomeScreen()
+}
+
+// getAIVersionName returns the name for an AI version
+func getAIVersionName(version int) string {
+	switch version {
+	case 0:
+		return "AI (V1)"
+	case 1:
+		return "AI (V2)"
+	default:
+		return "AI"
+	}
 }
 
 // RunUI runs the UI
 func RunUI() {
-	// Create initial game
-	g := game.NewGame("Human", "AI")
+	// Create initial game (won't be used until player makes a selection)
+	g := game.NewGame("Player", "AI")
 
 	// Create UI
 	ui := NewUI(g)

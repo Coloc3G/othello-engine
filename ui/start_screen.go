@@ -211,6 +211,13 @@ func (s *UI) StartGame(player1, player2 string) {
 	// Create new game
 	s.game = game.NewGame(player1, player2)
 
+	// Reset game screen properties
+	if s.gameScreen != nil {
+		s.gameScreen.lastMovePos = game.Position{Row: -1, Col: -1}
+		s.gameScreen.moveHistory = make([][2]MoveRecord, 0)
+		s.gameScreen.scrollOffset = 0
+	}
+
 	// Switch to game screen
 	s.currentScreen = s.gameScreen
 }
