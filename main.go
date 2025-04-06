@@ -23,6 +23,7 @@ func main() {
 	loadFile := flag.String("load", "", "Load existing model file")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")
 	tournamentMode := flag.Bool("tournament", false, "Use tournament mode for training")
+	numGames := flag.Int("games", 30, "Number of games to play between models (max: number of openings)")
 
 	// Comparison parameters
 	// compareGames := flag.Int("compare-games", 200, "Number of games for version comparison")
@@ -46,7 +47,7 @@ func main() {
 		ui.RunUI()
 
 	case "train":
-		runTrainer(*generations, *populationSize, *loadFile, *threads, *tournamentMode, *cpuOnly)
+		runTrainer(*generations, *populationSize, *loadFile, *threads, *tournamentMode, *cpuOnly, *numGames)
 
 	// case "compare":
 	// 	if *useOpenings {
@@ -63,7 +64,7 @@ func main() {
 }
 
 // runTrainer runs the training process
-func runTrainer(generations int, populationSize int, loadFile string, threads int, tournamentMode bool, cpuOnly bool) {
+func runTrainer(generations int, populationSize int, loadFile string, threads int, tournamentMode bool, cpuOnly bool, numGames int) {
 	fmt.Println("Othello AI Trainer")
 	fmt.Printf("Running with %d threads\n", threads)
 
@@ -87,7 +88,7 @@ func runTrainer(generations int, populationSize int, loadFile string, threads in
 		if gpuAvailable {
 			fmt.Println("GPU acceleration enabled successfully")
 			gpuTrainer := learning.NewGPUTrainer(populationSize)
-			gpuTrainer.NumGames = 30 // Adjust as needed
+			gpuTrainer.NumGames = numGames // Set number of games
 			trainer = gpuTrainer
 
 			// Load existing model if specified
@@ -115,7 +116,7 @@ func runTrainer(generations int, populationSize int, loadFile string, threads in
 	if !useGPU {
 		fmt.Println("Using CPU for training")
 		cpuTrainer := learning.NewTrainer(populationSize)
-		cpuTrainer.NumGames = 30 // Adjust as needed
+		cpuTrainer.NumGames = numGames // Set number of games
 		trainer = cpuTrainer
 
 		// Load existing model if specified
@@ -136,8 +137,8 @@ func runTrainer(generations int, populationSize int, loadFile string, threads in
 	}
 
 	// Start training
-	fmt.Printf("Starting training for %d generations with population size %d\n",
-		generations, populationSize)
+	fmt.Printf("Starting training for %d generations with population size %d, playing %d games per match\n",
+		generations, populationSize, numGames)
 
 	// Use tournament mode or standard training
 	if tournamentMode {

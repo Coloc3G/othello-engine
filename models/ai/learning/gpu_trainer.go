@@ -6,26 +6,18 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/Coloc3G/othello-engine/models/opening"
 	"github.com/Coloc3G/othello-engine/models/utils"
-	"github.com/schollz/progressbar/v3"
 )
 
 // GPUTrainer enhances the Trainer with GPU capabilities
 type GPUTrainer struct {
-	Models         []EvaluationModel
-	BestModel      EvaluationModel
-	Generation     int
-	PopulationSize int
-	MutationRate   float64
-	NumGames       int
-	MaxDepth       int
-	UseGPU         bool
+	*BaseTrainer
+	UseGPU bool
 }
 
 // NewGPUTrainer creates a new trainer with GPU support
@@ -34,13 +26,8 @@ func NewGPUTrainer(popSize int) *GPUTrainer {
 	gpuAvailable := evaluation.InitCUDA()
 
 	return &GPUTrainer{
-		Models:         make([]EvaluationModel, 0),
-		PopulationSize: popSize,
-		MutationRate:   0.2,
-		NumGames:       100,
-		MaxDepth:       5,
-		Generation:     1,
-		UseGPU:         gpuAvailable,
+		BaseTrainer: NewBaseTrainer(popSize),
+		UseGPU:      gpuAvailable,
 	}
 }
 
@@ -70,13 +57,20 @@ func (t *GPUTrainer) StartTraining(generations int) {
 		t.InitializePopulation()
 	}
 
+	t.Stats.Reset()
+
 	for gen := 1; gen <= generations; gen++ {
+		genStartTime := time.Now()
+
 		t.Generation = gen
 		fmt.Printf("\nGeneration %d/%d using %s\n", gen, generations,
 			map[bool]string{true: "GPU acceleration", false: "CPU only"}[t.UseGPU])
 
 		// Evaluate all models
+		evalStartTime := time.Now()
 		t.evaluatePopulation()
+		evalTime := time.Since(evalStartTime)
+		t.Stats.RecordOperation("evaluation", evalTime)
 
 		// Sort models by fitness
 		t.sortModelsByFitness()
@@ -100,6 +94,14 @@ func (t *GPUTrainer) StartTraining(generations int) {
 		if gen < generations {
 			t.createNextGeneration()
 		}
+
+		genTime := time.Since(genStartTime)
+		t.Stats.RecordOperation("generation", genTime)
+
+		// Print performance statistics every 5 generations
+		if gen%5 == 0 || gen == generations {
+			t.Stats.PrintSummary()
+		}
 	}
 
 	fmt.Println("\nTraining completed!")
@@ -116,48 +118,22 @@ func (t *GPUTrainer) calculateAvgFitness() float64 {
 
 // evaluatePopulation evaluates all models by playing games
 func (t *GPUTrainer) evaluatePopulation() {
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
-
-	// Calculate total number of matches to play
-	totalMatches := t.getTotalMatchCount()
-
-	fmt.Printf("Evaluating models - playing %d matches total\n", totalMatches)
-
-	// Create a single progress bar for all matches
-	bar := progressbar.NewOptions(totalMatches,
-		progressbar.OptionSetDescription("Match progress"),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowIts(),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "=",
-			SaucerHead:    ">",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
-	bar.RenderBlank()
-
-	incrementBarFunc := func() {
-		mutex.Lock()
-		defer mutex.Unlock()
-		bar.Add(1)
-		bar.RenderBlank()
-	}
-
+	// Get models as pointer slice for parallel evaluation
+	modelPtrs := make([]*EvaluationModel, len(t.Models))
 	for i := range t.Models {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-
-			t.evaluateModel(&t.Models[index], incrementBarFunc)
-		}(i)
+		modelPtrs[i] = &t.Models[i]
 	}
 
-	wg.Wait()
-	fmt.Println() // Add newline after progress bar completes
+	// Define evaluation function creator based on GPU/CPU
+	createEvalFunc := func(model EvaluationModel) evaluation.Evaluation {
+		if t.UseGPU {
+			return evaluation.NewGPUMixedEvaluation(model.Coeffs)
+		}
+		return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
+	}
+
+	// Evaluate all models in parallel using shared utility
+	evaluateModelsInParallel(modelPtrs, createEvalFunc, t.MaxDepth, t.NumGames, t.Stats)
 }
 
 // getTotalMatchCount calculates the total number of matches to be played in evaluation
@@ -436,15 +412,22 @@ func (t *GPUTrainer) LoadModel(filename string) (EvaluationModel, error) {
 	return model, err
 }
 
-// SaveGenerationStats saves statistics about the current generation
+// SaveGenerationStats overrides the base trainer's method to include GPU information
 func (t *GPUTrainer) SaveGenerationStats(gen int) error {
 	stats := struct {
-		Generation  int             `json:"generation"`
-		BestFitness float64         `json:"best_fitness"`
-		AvgFitness  float64         `json:"avg_fitness"`
-		BestModel   EvaluationModel `json:"best_model"`
-		Timestamp   string          `json:"timestamp"`
-		UsingGPU    bool            `json:"using_gpu"`
+		Generation     int             `json:"generation"`
+		BestFitness    float64         `json:"best_fitness"`
+		AvgFitness     float64         `json:"avg_fitness"`
+		BestModel      EvaluationModel `json:"best_model"`
+		Timestamp      string          `json:"timestamp"`
+		UsingGPU       bool            `json:"using_gpu"`
+		PerformanceLog struct {
+			EvaluationTimeMs int `json:"evaluation_time_ms"`
+			TournamentTimeMs int `json:"tournament_time_ms"`
+			CrossoverTimeMs  int `json:"crossover_time_ms"`
+			MutationTimeMs   int `json:"mutation_time_ms"`
+			TotalTimeMs      int `json:"total_time_ms"`
+		} `json:"performance"`
 	}{
 		Generation:  gen,
 		BestFitness: t.Models[0].Fitness,
@@ -460,13 +443,15 @@ func (t *GPUTrainer) SaveGenerationStats(gen int) error {
 	}
 	stats.AvgFitness = sum / float64(len(t.Models))
 
-	data, err := json.MarshalIndent(stats, "", "  ")
-	if err != nil {
-		return err
-	}
+	// Add performance statistics
+	stats.PerformanceLog.EvaluationTimeMs = int(t.Stats.EvaluationTime.Milliseconds())
+	stats.PerformanceLog.TournamentTimeMs = int(t.Stats.TournamentTime.Milliseconds())
+	stats.PerformanceLog.CrossoverTimeMs = int(t.Stats.CrossoverTime.Milliseconds())
+	stats.PerformanceLog.MutationTimeMs = int(t.Stats.MutationTime.Milliseconds())
+	stats.PerformanceLog.TotalTimeMs = int(t.Stats.TotalGenerationTime.Milliseconds())
 
-	filename := fmt.Sprintf("stats_gen_%d.json", gen)
-	return os.WriteFile(filename, data, 0644)
+	// Save to file using the base trainer's helper methods
+	return t.BaseTrainer.SaveModelToFile(fmt.Sprintf("stats_gen_%d.json", gen), stats)
 }
 
 // TournamentTraining runs training using tournaments for evaluation
@@ -475,13 +460,20 @@ func (t *GPUTrainer) TournamentTraining(generations int) {
 		t.InitializePopulation()
 	}
 
+	t.Stats.Reset()
+
 	for gen := 1; gen <= generations; gen++ {
+		genStartTime := time.Now()
+
 		t.Generation = gen
 		fmt.Printf("\nGeneration %d/%d using %s\n", gen, generations,
 			map[bool]string{true: "GPU acceleration", false: "CPU only"}[t.UseGPU])
 
 		// Evaluate all models using tournament
+		tournamentStart := time.Now()
 		t.EvaluateWithTournament()
+		tournamentTime := time.Since(tournamentStart)
+		t.Stats.RecordOperation("tournament", tournamentTime)
 
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
@@ -489,6 +481,14 @@ func (t *GPUTrainer) TournamentTraining(generations int) {
 		// Create next generation
 		if gen < generations {
 			t.createNextGeneration()
+		}
+
+		genTime := time.Since(genStartTime)
+		t.Stats.RecordOperation("generation", genTime)
+
+		// Print performance statistics every 5 generations
+		if gen%5 == 0 || gen == generations {
+			t.Stats.PrintSummary()
 		}
 	}
 
