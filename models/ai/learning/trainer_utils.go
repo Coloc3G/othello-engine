@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
+	"github.com/Coloc3G/othello-engine/models/ai/stats"
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/Coloc3G/othello-engine/models/opening"
 	"github.com/Coloc3G/othello-engine/models/utils"
@@ -23,12 +24,35 @@ func PlayMatchWithOpening(model EvaluationModel, modelEval, standardEval evaluat
 	// Determine player model (alternate between games)
 	playerModel := &g.Players[playerIndex]
 
+	// Check if we're using a GPU evaluation
+	useGPU := false
+	if gpuEval, ok := modelEval.(*evaluation.GPUMixedEvaluation); ok {
+		useGPU = true
+		// Ensure coefficients are set in CUDA
+		evaluation.SetCUDACoefficients(gpuEval.Coeffs)
+	}
+
 	// Play the game until completion
 	for !game.IsGameFinished(g.Board) {
 		if g.CurrentPlayer.Color == playerModel.Color {
 			// Model player's turn
 			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-				pos := evaluation.Solve(*g, g.CurrentPlayer, maxDepth, modelEval)
+				var pos game.Position
+
+				// Try GPU solving if enabled
+				if useGPU {
+					gpuPos, success := GPUSolve(*g, g.CurrentPlayer, maxDepth)
+					if success {
+						pos = gpuPos
+					} else {
+						// Fall back to CPU search
+						pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, modelEval)
+					}
+				} else {
+					// Use CPU search
+					pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, modelEval)
+				}
+
 				g.ApplyMove(pos)
 			} else {
 				// Skip turn if no valid moves
@@ -37,6 +61,7 @@ func PlayMatchWithOpening(model EvaluationModel, modelEval, standardEval evaluat
 		} else {
 			// Standard player's turn
 			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
+				// Always use CPU search for standard player for consistency
 				pos := evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
 				g.ApplyMove(pos)
 			} else {
@@ -149,7 +174,7 @@ func evaluateModelsInParallel(
 	createEvalFunc func(EvaluationModel) evaluation.Evaluation,
 	maxDepth int,
 	numGames int,
-	stats *PerformanceStats) {
+	stats *stats.PerformanceStats) {
 
 	var wg sync.WaitGroup
 	var mutex sync.Mutex

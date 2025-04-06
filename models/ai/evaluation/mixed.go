@@ -32,12 +32,15 @@ type MixedEvaluation struct {
 
 // Coefficients structure for serialization
 type EvaluationCoefficients struct {
+	// Coefficients for different evaluation functions
 	MaterialCoeffs  []int `json:"material_coeff"`
 	MobilityCoeffs  []int `json:"mobility_coeff"`
 	CornersCoeffs   []int `json:"corners_coeff"`
 	ParityCoeffs    []int `json:"parity_coeff"`
 	StabilityCoeffs []int `json:"stability_coeff"`
 	FrontierCoeffs  []int `json:"frontier_coeff"`
+	// Name of the coefficients set
+	Name string `json:"name"`
 }
 
 func NewMixedEvaluation() *MixedEvaluation {

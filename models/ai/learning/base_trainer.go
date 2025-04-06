@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
+	"github.com/Coloc3G/othello-engine/models/ai/stats"
 )
 
 // BaseTrainer implements common trainer functionality
@@ -20,7 +21,7 @@ type BaseTrainer struct {
 	MutationRate   float64
 	NumGames       int
 	MaxDepth       int
-	Stats          *PerformanceStats
+	Stats          *stats.PerformanceStats
 }
 
 // NewBaseTrainer creates a new base trainer
@@ -32,7 +33,7 @@ func NewBaseTrainer(popSize int) *BaseTrainer {
 		NumGames:       100,
 		MaxDepth:       5,
 		Generation:     1,
-		Stats:          NewPerformanceStats(),
+		Stats:          stats.NewPerformanceStats(),
 	}
 }
 

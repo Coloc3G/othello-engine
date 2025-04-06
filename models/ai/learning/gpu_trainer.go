@@ -127,7 +127,14 @@ func (t *GPUTrainer) evaluatePopulation() {
 	// Define evaluation function creator based on GPU/CPU
 	createEvalFunc := func(model EvaluationModel) evaluation.Evaluation {
 		if t.UseGPU {
-			return evaluation.NewGPUMixedEvaluation(model.Coeffs)
+			// Configurer l'évaluation GPU avec une taille de batch plus grande pour mieux utiliser le GPU
+			gpuEval := evaluation.NewGPUMixedEvaluation(model.Coeffs)
+			gpuEval.SetBatchSize(512) // Augmenter la taille des lots
+
+			// Vérifier que les coefficients sont bien définis dans le GPU
+			evaluation.SetCUDACoefficients(model.Coeffs)
+
+			return gpuEval
 		}
 		return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 	}
@@ -154,6 +161,22 @@ func (t *GPUTrainer) evaluateModel(model *EvaluationModel, incrementBarFunc func
 	// Create evaluation function with model coefficients
 	evalFunc := t.createEvaluationFromModel(*model)
 
+	// Pour l'évaluation GPU, on doit accumuler les états de jeu pour évaluation en lots
+	var boardsToEvaluate []game.Board
+	var playersToEvaluate []game.Piece
+	const batchSize = 64 // Taille optimale du lot pour GPU
+
+	// Fonction d'évaluation en lots pour GPU
+	evaluateBatch := func() {
+		if len(boardsToEvaluate) > 0 && t.UseGPU {
+			// Évaluer le lot entier d'un coup sur GPU
+			evaluation.EvaluateStatesCUDA(boardsToEvaluate, playersToEvaluate)
+			// Réinitialiser les lots
+			boardsToEvaluate = nil
+			playersToEvaluate = nil
+		}
+	}
+
 	// Use a standard evaluation for opponent
 	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
 
@@ -175,7 +198,30 @@ func (t *GPUTrainer) evaluateModel(model *EvaluationModel, incrementBarFunc func
 				if g.CurrentPlayer.Color == playerModel.Color {
 					// Model player's turn
 					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-						pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+						var pos game.Position
+
+						// Utilisation améliorée du GPU
+						if t.UseGPU {
+							// Accumuler cet état de jeu pour évaluation en lot
+							boardsToEvaluate = append(boardsToEvaluate, g.Board)
+							playersToEvaluate = append(playersToEvaluate, g.CurrentPlayer.Color)
+
+							// Si on atteint la taille du lot, évaluer en masse
+							if len(boardsToEvaluate) >= batchSize {
+								evaluateBatch()
+							}
+
+							gpuPos, success := GPUSolve(*g, g.CurrentPlayer, t.MaxDepth)
+							if success {
+								pos = gpuPos
+							} else {
+								pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+							}
+						} else {
+							// Use CPU search
+							pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+						}
+
 						g.ApplyMove(pos)
 					} else {
 						// Skip turn if no valid moves
@@ -184,6 +230,7 @@ func (t *GPUTrainer) evaluateModel(model *EvaluationModel, incrementBarFunc func
 				} else {
 					// Standard player's turn
 					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
+						// Always use CPU search for standard player for consistency
 						pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, standardEval)
 						g.ApplyMove(pos)
 					} else {
@@ -192,6 +239,9 @@ func (t *GPUTrainer) evaluateModel(model *EvaluationModel, incrementBarFunc func
 					}
 				}
 			}
+
+			// Évaluer tous les états restants
+			evaluateBatch()
 
 			// Determine winner
 			blackCount, whiteCount := game.CountPieces(g.Board)

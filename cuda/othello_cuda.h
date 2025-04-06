@@ -7,17 +7,32 @@ extern "C"
 #endif
 
   // Initialize CUDA and return success status (1=success, 0=failure)
-  int initCUDA();
+  __declspec(dllexport) int initCUDA();
+
+  // Initialize Zobrist hash table for transposition table
+  __declspec(dllexport) void initZobristTable();
 
   // Set evaluation coefficients
-  void setCoefficients(int *material, int *mobility, int *corners,
-                       int *parity, int *stability, int *frontier);
+  __declspec(dllexport) void setCoefficients(int *material, int *mobility, int *corners,
+                                             int *parity, int *stability, int *frontier);
 
   // Evaluate multiple game states in parallel
-  void evaluateStates(int *boards, int *player_colors, int *scores, int num_states);
+  __declspec(dllexport) void evaluateStates(int *boards, int *player_colors, int *scores, int num_states);
+
+  // Perform minimax search to find best move for a board
+  __declspec(dllexport) int findBestMove(int *board, int player_color, int depth, int *best_row, int *best_col);
+
+  // Check if a player has valid moves
+  __declspec(dllexport) int hasValidMoves(int *board, int player_color);
+
+  // Check if game is finished (no valid moves for either player)
+  __declspec(dllexport) int isGameFinished(int *board);
 
   // Free CUDA resources
-  void cleanupCUDA();
+  __declspec(dllexport) void cleanupCUDA();
+
+  // Get GPU memory usage statistics
+  __declspec(dllexport) void getGPUMemoryInfo(unsigned long long *free_memory, unsigned long long *total_memory);
 
 #ifdef __cplusplus
 }

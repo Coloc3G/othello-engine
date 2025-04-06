@@ -314,7 +314,8 @@ func (s *GameScreen) updateEvaluation() {
 				true,    // maximizing
 				-1<<31,  // alpha
 				1<<31-1, // beta
-				s.evaluator)
+				s.evaluator,
+				nil) // Pass nil for performance stats since we don't track them in the UI
 
 			// Check again if we should cancel before sending result
 			select {

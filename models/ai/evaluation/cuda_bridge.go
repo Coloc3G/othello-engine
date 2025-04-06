@@ -1,6 +1,7 @@
 package evaluation
 
-// #cgo LDFLAGS: -L${SRCDIR}/../../../cuda -lcuda_othello
+// #cgo windows LDFLAGS: -L${SRCDIR}/../../../cuda -lcuda_othello
+// #cgo linux LDFLAGS: -L${SRCDIR}/../../../cuda -lcuda_othello
 // #cgo CFLAGS: -I${SRCDIR}/../../../cuda
 // #include <stdlib.h>
 // #include "othello_cuda.h"
@@ -11,8 +12,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 	"unsafe"
 
+	"github.com/Coloc3G/othello-engine/models/ai/cache"
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
@@ -20,6 +23,23 @@ var (
 	cudaInitialized   bool
 	cudaInitializeMux sync.Mutex
 	gpuAvailable      bool
+
+	// Pour l'évaluation par lots
+	gpuBatchMutex   sync.Mutex
+	gpuBatchBoards  []game.Board
+	gpuBatchPlayers []game.Piece
+	gpuBatchKeys    []cache.BoardHashKey
+	gpuBatchResults []int
+	gpuBatchDepth   int
+	gpuBatchChannel chan struct{}
+	gpuBatchSize    int = 4096 // Augmenté pour un meilleur throughput
+	gpuBatchRunning bool
+
+	// Pour les statistiques de performance
+	totalTransferTime  time.Duration
+	totalKernelTime    time.Duration
+	batchesProcessed   int
+	positionsEvaluated int
 )
 
 // InitCUDA initializes the CUDA environment
@@ -58,6 +78,20 @@ func InitCUDA() bool {
 
 	if gpuAvailable {
 		fmt.Println("CUDA GPU acceleration initialized successfully")
+
+		// Initialiser le traitement par lots en arrière-plan avec une taille augmentée
+		gpuBatchBoards = make([]game.Board, 0, gpuBatchSize)
+		gpuBatchPlayers = make([]game.Piece, 0, gpuBatchSize)
+		gpuBatchKeys = make([]cache.BoardHashKey, 0, gpuBatchSize)
+		gpuBatchResults = make([]int, 0, gpuBatchSize)
+		gpuBatchChannel = make(chan struct{}, 1)
+		gpuBatchRunning = false
+
+		// Initialize Zobrist hash table on GPU for transposition table
+		C.initZobristTable()
+
+		// Démarrer le traitement par lots en arrière-plan
+		go batchProcessingWorker()
 	} else {
 		fmt.Println("CUDA GPU acceleration not available, falling back to CPU")
 	}
@@ -168,6 +202,64 @@ func EvaluateStatesCUDA(boards []game.Board, playerColors []game.Piece) []int {
 		return nil
 	}
 
+	// Optimisation: utiliser des pinned memory pour accélérer les transferts
+	// Mesurer le temps de transfert pour des statistiques
+	transferStart := time.Now()
+
+	// Flatten the boards for C - utiliser unified memory quand c'est disponible
+	flattenedBoards := make([]int, numStates*8*8)
+	for s := 0; s < numStates; s++ {
+		for i := 0; i < 8; i++ {
+			for j := 0; j < 8; j++ {
+				flattenedBoards[s*64+i*8+j] = int(boards[s][i][j])
+			}
+		}
+	}
+
+	// Convert player colors to ints
+	colorInts := make([]int, numStates)
+	for i, color := range playerColors {
+		colorInts[i] = int(color)
+	}
+
+	// Prepare C arrays
+	boardsC := (*C.int)(unsafe.Pointer(&flattenedBoards[0]))
+	colorsC := (*C.int)(unsafe.Pointer(&colorInts[0]))
+	scoresC := (*C.int)(C.malloc(C.size_t(numStates * 4))) // 4 bytes per int
+	defer C.free(unsafe.Pointer(scoresC))
+
+	transferTime := time.Since(transferStart)
+	totalTransferTime += transferTime
+
+	// Call C function to evaluate
+	kernelStart := time.Now()
+	C.evaluateStates(boardsC, colorsC, scoresC, C.int(numStates))
+	kernelTime := time.Since(kernelStart)
+	totalKernelTime += kernelTime
+
+	// Copy back results and measure transfer time again
+	transferStart = time.Now()
+	scores := make([]int, numStates)
+	for i := 0; i < numStates; i++ {
+		scores[i] = int(*(*C.int)(unsafe.Pointer(uintptr(unsafe.Pointer(scoresC)) + uintptr(i*4))))
+	}
+	transferTime = time.Since(transferStart)
+	totalTransferTime += transferTime
+
+	// Update statistics
+	batchesProcessed++
+	positionsEvaluated += numStates
+
+	return scores
+}
+
+// evaluateStatesCUDA est l'implémentation interne qui fait l'appel à CUDA
+func evaluateStatesCUDA(boards []game.Board, playerColors []game.Piece) []int {
+	numStates := len(boards)
+	if numStates == 0 || numStates != len(playerColors) {
+		return nil
+	}
+
 	// Flatten the boards for C
 	flattenedBoards := make([]int, numStates*8*8)
 	for s := 0; s < numStates; s++ {
@@ -200,4 +292,163 @@ func EvaluateStatesCUDA(boards []game.Board, playerColors []game.Piece) []int {
 	}
 
 	return scores
+}
+
+// AddToBatch adds a position to the GPU evaluation batch
+// Returns the batch index and whether the batch was processed
+func AddToBatch(board game.Board, player game.Piece, key cache.BoardHashKey, depth int) (bool, int) {
+	if !IsGPUAvailable() {
+		return false, -1
+	}
+
+	gpuBatchMutex.Lock()
+	defer gpuBatchMutex.Unlock()
+
+	// Set depth for the batch if it's the first position
+	if len(gpuBatchBoards) == 0 {
+		gpuBatchDepth = depth
+	}
+
+	// Add to batch
+	idx := len(gpuBatchBoards)
+	gpuBatchBoards = append(gpuBatchBoards, board)
+	gpuBatchPlayers = append(gpuBatchPlayers, player)
+	gpuBatchKeys = append(gpuBatchKeys, key)
+
+	// Process batch if it's full or if enough positions for efficient processing
+	if len(gpuBatchBoards) >= gpuBatchSize {
+		// Trigger batch processing
+		if !gpuBatchRunning {
+			gpuBatchRunning = true
+			select {
+			case gpuBatchChannel <- struct{}{}:
+				// Successfully triggered
+			default:
+				// Channel already has a signal
+			}
+		}
+		return true, idx
+	}
+
+	return false, idx
+}
+
+// FlushBatch forces processing of the current batch even if not full
+func FlushBatch() bool {
+	gpuBatchMutex.Lock()
+	if len(gpuBatchBoards) == 0 {
+		gpuBatchMutex.Unlock()
+		return false
+	}
+
+	// Mark as running and trigger processing
+	gpuBatchRunning = true
+	gpuBatchMutex.Unlock()
+
+	select {
+	case gpuBatchChannel <- struct{}{}:
+		return true
+	default:
+		return false
+	}
+}
+
+// batchProcessingWorker runs in a separate goroutine to process batches
+func batchProcessingWorker() {
+	for range gpuBatchChannel {
+		processBatch()
+	}
+}
+
+// processBatch handles the actual batch processing
+func processBatch() {
+	gpuBatchMutex.Lock()
+
+	// Exit if no boards
+	if len(gpuBatchBoards) == 0 {
+		gpuBatchRunning = false
+		gpuBatchMutex.Unlock()
+		return
+	}
+
+	// Capture current batch
+	boards := make([]game.Board, len(gpuBatchBoards))
+	players := make([]game.Piece, len(gpuBatchPlayers))
+	keys := make([]cache.BoardHashKey, len(gpuBatchKeys))
+	depth := gpuBatchDepth
+
+	copy(boards, gpuBatchBoards)
+	copy(players, gpuBatchPlayers)
+	copy(keys, gpuBatchKeys)
+
+	// Clear current batch for new entries
+	gpuBatchBoards = gpuBatchBoards[:0]
+	gpuBatchPlayers = gpuBatchPlayers[:0]
+	gpuBatchKeys = gpuBatchKeys[:0]
+	gpuBatchRunning = false
+
+	gpuBatchMutex.Unlock()
+
+	// Process the batch on GPU
+	scores := EvaluateStatesCUDA(boards, players)
+
+	// Store results in cache
+	if len(scores) == len(keys) {
+		boardCache := cache.GetGlobalCache()
+		boardCache.StoreBatchResults(keys, scores, depth)
+	}
+}
+
+// GetBatchStats returns statistics about GPU batch processing
+func GetBatchStats() (batches int, positions int, avgTransferMs float64, avgKernelMs float64) {
+	if batchesProcessed == 0 {
+		return 0, 0, 0, 0
+	}
+
+	return batchesProcessed,
+		positionsEvaluated,
+		float64(totalTransferTime.Milliseconds()) / float64(batchesProcessed),
+		float64(totalKernelTime.Milliseconds()) / float64(batchesProcessed)
+}
+
+// ResetBatchStats resets the batch statistics
+func ResetBatchStats() {
+	totalTransferTime = 0
+	totalKernelTime = 0
+	batchesProcessed = 0
+	positionsEvaluated = 0
+}
+
+// FindBestMoveCUDA uses GPU to find the best move directly
+func FindBestMoveCUDA(board game.Board, player game.Piece, depth int) (game.Position, bool) {
+	if !IsGPUAvailable() {
+		return game.Position{Row: -1, Col: -1}, false
+	}
+
+	// Flatten the board for C
+	flatBoard := make([]C.int, 64)
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			flatBoard[i*8+j] = C.int(board[i][j])
+		}
+	}
+
+	// Prepare C variables
+	boardC := (*C.int)(unsafe.Pointer(&flatBoard[0]))
+	playerC := C.int(int(player))
+	depthC := C.int(depth)
+
+	var bestRow, bestCol C.int
+	bestRowPtr := (*C.int)(unsafe.Pointer(&bestRow))
+	bestColPtr := (*C.int)(unsafe.Pointer(&bestCol))
+
+	// Call C function to find best move
+	result := C.findBestMove(boardC, playerC, depthC, bestRowPtr, bestColPtr)
+
+	// Check if a valid move was found
+	if result <= -1000000 || bestRow < 0 || bestRow >= 8 || bestCol < 0 || bestCol >= 8 {
+		return game.Position{Row: -1, Col: -1}, false
+	}
+
+	return game.Position{Row: int(bestRow), Col: int(bestCol)}, true
 }

@@ -25,7 +25,7 @@ func (t *Trainer) InitializePopulation() {
 
 	// Initialize with a reasonable default model
 	defaultModel := EvaluationModel{
-		Coeffs:     evaluation.V2Coeff,
+		Coeffs:     evaluation.V1Coeff,
 		Generation: 1,
 	}
 
