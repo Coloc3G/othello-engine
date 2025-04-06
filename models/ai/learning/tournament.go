@@ -28,10 +28,14 @@ type Tournament struct {
 	MaxDepth    int // Search depth for AI
 	StandardAI  *evaluation.MixedEvaluation
 	UseStandard bool // Whether to include standard AI in tournament
+	UseGPU      bool // Whether to use GPU acceleration
 }
 
 // NewTournament creates a new tournament with specified parameters
 func NewTournament(models []EvaluationModel, numGames, maxDepth int, useStandard bool) *Tournament {
+	// Check GPU availability
+	gpuAvailable := evaluation.IsGPUAvailable()
+
 	return &Tournament{
 		Models:      models,
 		Results:     make([]TournamentResult, 0),
@@ -39,6 +43,7 @@ func NewTournament(models []EvaluationModel, numGames, maxDepth int, useStandard
 		MaxDepth:    maxDepth,
 		StandardAI:  evaluation.NewMixedEvaluation(),
 		UseStandard: useStandard,
+		UseGPU:      gpuAvailable,
 	}
 }
 
@@ -67,19 +72,40 @@ func (t *Tournament) RunTournament() {
 		}
 	}
 
-	// Calculate total number of games
+	// Calculate total number of matches
 	totalMatches := numCompetitors * (numCompetitors - 1) / 2
 	totalGames := totalMatches * t.NumGames
+
+	fmt.Printf("Tournament starting - %d competitors, %d total games\n", numCompetitors, totalGames)
 
 	// Create progress bar
 	bar := progressbar.NewOptions(
 		totalGames,
 		progressbar.OptionSetDescription("Tournament progress"),
 		progressbar.OptionShowCount(),
+		progressbar.OptionShowIts(),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
 	)
 
+	// Set up channels for progress tracking
+	type matchResult struct {
+		model1     int
+		model2     int
+		wins1      int
+		wins2      int
+		draws      int
+		gamesCount int
+	}
+
+	results := make(chan matchResult, totalMatches)
 	var wg sync.WaitGroup
-	var mutex sync.Mutex
 
 	// Play games between all pairs of models
 	for i := 0; i < numCompetitors; i++ {
@@ -92,24 +118,43 @@ func (t *Tournament) RunTournament() {
 				// Play games between model1 and model2
 				wins1, wins2, draws := t.playMatch(model1, model2)
 
-				mutex.Lock()
-				// Update results
-				t.Results[model1].Wins += wins1
-				t.Results[model1].Losses += wins2
-				t.Results[model1].Draws += draws
-
-				t.Results[model2].Wins += wins2
-				t.Results[model2].Losses += wins1
-				t.Results[model2].Draws += draws
-
-				// Update progress bar
-				bar.Add(t.NumGames)
-				mutex.Unlock()
+				// Send results back through channel
+				results <- matchResult{
+					model1:     model1,
+					model2:     model2,
+					wins1:      wins1,
+					wins2:      wins2,
+					draws:      draws,
+					gamesCount: t.NumGames,
+				}
 			}(i, j)
 		}
 	}
 
+	// Create a goroutine to collect results and update progress
+	go func() {
+		gamesProcessed := 0
+		for result := range results {
+			// Update results
+			t.Results[result.model1].Wins += result.wins1
+			t.Results[result.model1].Losses += result.wins2
+			t.Results[result.model1].Draws += result.draws
+
+			t.Results[result.model2].Wins += result.wins2
+			t.Results[result.model2].Losses += result.wins1
+			t.Results[result.model2].Draws += result.draws
+
+			// Update progress bar
+			gamesProcessed += result.gamesCount
+			bar.Set(gamesProcessed)
+		}
+	}()
+
+	// Wait for all matches to complete
 	wg.Wait()
+	close(results)
+
+	fmt.Println() // Add newline after progress bar completes
 
 	// Calculate final scores (2 points for win, 1 for draw)
 	for i := range t.Results {
@@ -220,6 +265,9 @@ func (t *Tournament) playGame(blackEval, whiteEval evaluation.Evaluation) game.P
 
 // createEvaluationFromModel creates a custom evaluation from model coefficients
 func (t *Tournament) createEvaluationFromModel(model EvaluationModel) evaluation.Evaluation {
+	if t.UseGPU {
+		return evaluation.NewGPUMixedEvaluation(model.Coeffs)
+	}
 	return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 }
 

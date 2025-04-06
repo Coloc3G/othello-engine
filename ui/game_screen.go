@@ -14,6 +14,7 @@ import (
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
+	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
 // GameScreen manages the main game UI
@@ -105,9 +106,9 @@ func (s *GameScreen) Update() error {
 	if s.ui.game.CurrentPlayer.Name == "AI" {
 		eval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
 		pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
-
 		// Apply move and update evaluation
 		if s.ui.game.ApplyMove(pos) {
+			fmt.Println(utils.PositionToAlgebraic(pos))
 			s.updateEvaluation()
 			s.lastMove = time.Now()
 		}

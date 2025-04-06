@@ -55,8 +55,10 @@ func (s *EndScreen) Update() error {
 		mouseY >= s.buttonBounds[1] &&
 		mouseY < s.buttonBounds[1]+s.buttonBounds[3]
 
-	// Handle button click
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && s.buttonHover {
+	// Handle button click or Enter/Space key for restart
+	if (inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && s.buttonHover) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+		inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		s.ui.NewGame()
 	}
 
