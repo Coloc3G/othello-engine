@@ -66,9 +66,6 @@ func InitCUDA() bool {
 
 	if gpuAvailable {
 		fmt.Println("CUDA GPU acceleration initialized successfully")
-
-		// Initialize Zobrist hash table on GPU for transposition table
-		C.initZobristTable()
 	} else {
 		fmt.Println("CUDA GPU acceleration not available, falling back to CPU")
 	}
@@ -150,22 +147,47 @@ func IsGPUAvailable() bool {
 }
 
 // SetCUDACoefficients sets the evaluation coefficients in CUDA
-func SetCUDACoefficients(coeffs EvaluationCoefficients) bool {
+func SetCUDACoefficients(coeffs EvaluationCoefficients) {
 	if !IsGPUAvailable() {
-		return false
+		return
 	}
 
-	// Convert Go arrays to C arrays
-	materialC := (*C.int)(unsafe.Pointer(&coeffs.MaterialCoeffs[0]))
-	mobilityC := (*C.int)(unsafe.Pointer(&coeffs.MobilityCoeffs[0]))
-	cornersC := (*C.int)(unsafe.Pointer(&coeffs.CornersCoeffs[0]))
-	parityC := (*C.int)(unsafe.Pointer(&coeffs.ParityCoeffs[0]))
-	stabilityC := (*C.int)(unsafe.Pointer(&coeffs.StabilityCoeffs[0]))
-	frontierC := (*C.int)(unsafe.Pointer(&coeffs.FrontierCoeffs[0]))
+	// Verify we have valid coefficients
+	if len(coeffs.MaterialCoeffs) < 3 || len(coeffs.MobilityCoeffs) < 3 ||
+		len(coeffs.CornersCoeffs) < 3 || len(coeffs.ParityCoeffs) < 3 ||
+		len(coeffs.StabilityCoeffs) < 3 || len(coeffs.FrontierCoeffs) < 3 {
+		return
+	}
+
+	// Create local copies to ensure memory layout is consistent
+	materialCopy := make([]C.int, 3)
+	mobilityCopy := make([]C.int, 3)
+	cornersCopy := make([]C.int, 3)
+	parityCopy := make([]C.int, 3)
+	stabilityCopy := make([]C.int, 3)
+	frontierCopy := make([]C.int, 3)
+
+	// Fill the arrays with coefficient values
+	for i := 0; i < 3; i++ {
+		materialCopy[i] = C.int(coeffs.MaterialCoeffs[i])
+		mobilityCopy[i] = C.int(coeffs.MobilityCoeffs[i])
+		cornersCopy[i] = C.int(coeffs.CornersCoeffs[i])
+		parityCopy[i] = C.int(coeffs.ParityCoeffs[i])
+		stabilityCopy[i] = C.int(coeffs.StabilityCoeffs[i])
+		frontierCopy[i] = C.int(coeffs.FrontierCoeffs[i])
+	}
 
 	// Call C function to set coefficients
-	C.setCoefficients(materialC, mobilityC, cornersC, parityC, stabilityC, frontierC)
-	return true
+	C.setCoefficients(
+		&materialCopy[0],
+		&mobilityCopy[0],
+		&cornersCopy[0],
+		&parityCopy[0],
+		&stabilityCopy[0],
+		&frontierCopy[0])
+
+	// Verify that coefficients are set correctly
+	return
 }
 
 // EvaluateStatesCUDA evaluates multiple game states in parallel using CUDA

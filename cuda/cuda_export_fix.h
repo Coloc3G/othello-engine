@@ -18,7 +18,6 @@ extern "C"
 #endif
 
   OTHELLO_EXPORT int initCUDA();
-  OTHELLO_EXPORT void initZobristTable();
   OTHELLO_EXPORT void setCoefficients(int *material, int *mobility, int *corners,
                                       int *parity, int *stability, int *frontier);
   OTHELLO_EXPORT void evaluateStates(int *boards, int *player_colors, int *scores, int num_states);

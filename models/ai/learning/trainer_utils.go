@@ -43,7 +43,7 @@ func PlayMatchWithOpening(
 	// Determine player model (alternate between games)
 	playerModel := &g.Players[playerIndex]
 
-	// Check if we're using a GPU evaluation
+	// Check if we're using a GPU evaluation for the model
 	useGPU := false
 	if gpuEval, ok := modelEval.(*evaluation.GPUMixedEvaluation); ok {
 		useGPU = true
@@ -51,8 +51,36 @@ func PlayMatchWithOpening(
 		evaluation.SetCUDACoefficients(gpuEval.Coeffs)
 	}
 
+	// Also ensure standard evaluation uses GPU if available
+	useStandardGPU := false
+	if evaluation.IsGPUAvailable() {
+		// Convert standard evaluation to GPU version if it's not already
+		if _, ok := standardEval.(*evaluation.GPUMixedEvaluation); !ok {
+			// Create a GPU version with same coefficients
+			if mixedEval, ok := standardEval.(*evaluation.MixedEvaluation); ok {
+				coeffs := evaluation.EvaluationCoefficients{
+					Name:            "Standard",
+					MaterialCoeffs:  mixedEval.MaterialCoeff,
+					MobilityCoeffs:  mixedEval.MobilityCoeff,
+					CornersCoeffs:   mixedEval.CornersCoeff,
+					ParityCoeffs:    mixedEval.ParityCoeff,
+					StabilityCoeffs: mixedEval.StabilityCoeff,
+					FrontierCoeffs:  mixedEval.FrontierCoeff,
+				}
+				gpuStandardEval := evaluation.NewGPUMixedEvaluation(coeffs)
+				standardEval = gpuStandardEval
+				useStandardGPU = true
+				evaluation.SetCUDACoefficients(coeffs)
+			}
+		} else {
+			useStandardGPU = true
+		}
+	}
+
 	// Play the game until completion
+	moveCount := 0
 	for !game.IsGameFinished(g.Board) {
+		moveCount++
 		if g.CurrentPlayer.Color == playerModel.Color {
 			// Model player's turn
 			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
@@ -73,7 +101,7 @@ func PlayMatchWithOpening(
 
 				// Get the move based on evaluation type
 				if useGPU {
-					gpuPos, success := evaluation.GPUSolve(*g, g.CurrentPlayer, maxDepth)
+					gpuPos, success := evaluation.GPUSolveCmpCPU(*g, g.CurrentPlayer, maxDepth, model.Coeffs)
 					if success {
 						pos = gpuPos
 					} else {
@@ -93,13 +121,33 @@ func PlayMatchWithOpening(
 		} else {
 			// Standard player's turn
 			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-				// Always use CPU search for standard player for consistency
-				pos := evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
+				var pos game.Position
+
+				// Try to use GPU for standard AI as well
+				if useStandardGPU {
+					gpuPos, success := evaluation.GPUSolveCmpCPU(*g, g.CurrentPlayer, maxDepth, evaluation.V1Coeff)
+					if success {
+						pos = gpuPos
+					} else {
+						// Fall back to CPU search
+						pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
+					}
+				} else {
+					// Use CPU search
+					pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
+				}
+
 				g.ApplyMove(pos)
 			} else {
 				// Skip turn if no valid moves
 				g.CurrentPlayer = g.GetOtherPlayerMethod()
 			}
+		}
+
+		// Safety check to prevent infinite games
+		if moveCount > 100 {
+			fmt.Println("WARNING: Game exceeded 100 moves, forcing a draw")
+			return false, false, true
 		}
 	}
 
@@ -191,7 +239,7 @@ func evaluateModelsInParallel(
 	createEvalFunc func(EvaluationModel) evaluation.Evaluation,
 	maxDepth int,
 	numGames int,
-	stats *stats.PerformanceStats) {
+	s *stats.PerformanceStats) {
 
 	var wg sync.WaitGroup
 	var mutex sync.Mutex
@@ -228,7 +276,7 @@ func evaluateModelsInParallel(
 			defer wg.Done()
 
 			// Create a thread-local copy of performance stats for this goroutine
-			localStats := NewPerformanceStats()
+			localStats := stats.NewPerformanceStats()
 
 			// Reset statistics
 			model.Wins = 0
@@ -279,12 +327,12 @@ func evaluateModelsInParallel(
 			model.Fitness = float64(model.Wins) + float64(model.Draws)*0.5
 
 			// Merge local stats into global stats - this requires mutex
-			if stats != nil {
+			if s != nil {
 				mutex.Lock()
-				stats.RecordOperation("eval_creation", localStats.OpTimes["eval_creation"])
-				stats.RecordOperation("match", localStats.OpTimes["match"])
-				stats.Counts["eval_created"] += localStats.Counts["eval_created"]
-				stats.Counts["matches_played"] += totalMatches / len(models)
+				s.RecordOperation("eval_creation", localStats.OpTimes["eval_creation"])
+				s.RecordOperation("match", localStats.OpTimes["match"])
+				s.Counts["eval_created"] += localStats.Counts["eval_created"]
+				s.Counts["matches_played"] += totalMatches / len(models)
 				mutex.Unlock()
 			}
 		}(i, models[i])

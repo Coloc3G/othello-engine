@@ -10,13 +10,27 @@ func NewMaterialEvaluation() *MaterialEvaluation {
 	return &MaterialEvaluation{}
 }
 
-// Evaluate the given board state and return a score
-func (e *MaterialEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	sum := 0
-	for _, row := range b {
-		for _, piece := range row {
-			sum += int(piece)
+// Add a raw evaluation function that doesn't normalize the score
+func (e *MaterialEvaluation) rawEvaluate(b game.Board, player game.Player) int {
+	playerPieces := 0
+	opponentPieces := 0
+	opponent := game.GetOpponentColor(player.Color)
+
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if b[i][j] == player.Color {
+				playerPieces++
+			} else if b[i][j] == opponent {
+				opponentPieces++
+			}
 		}
 	}
-	return sum
+
+	// Simple difference, no normalization
+	return playerPieces - opponentPieces
+}
+
+// Evaluate the material advantage (number of pieces)
+func (e *MaterialEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
+	return e.rawEvaluate(b, player)
 }

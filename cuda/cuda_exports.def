@@ -1,6 +1,5 @@
 EXPORTS
     initCUDA
-    initZobristTable
     setCoefficients
     evaluateStates
     findBestMove

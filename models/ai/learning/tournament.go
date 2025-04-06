@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
+	"github.com/Coloc3G/othello-engine/models/ai/stats"
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/Coloc3G/othello-engine/models/opening"
 	"github.com/schollz/progressbar/v3"
@@ -28,11 +29,11 @@ type Tournament struct {
 	Results             []TournamentResult
 	NumGames            int // Number of games per match
 	MaxDepth            int // Search depth for AI
-	StandardAI          *evaluation.MixedEvaluation
-	UseStandard         bool              // Whether to include standard AI in tournament
-	UseGPU              bool              // Whether to use GPU acceleration
-	Stats               *PerformanceStats // Performance statistics
-	ProgressDescription string            // Description for progress bar
+	StandardAI          evaluation.Evaluation
+	UseStandard         bool                    // Whether to include standard AI in tournament
+	UseGPU              bool                    // Whether to use GPU acceleration
+	Stats               *stats.PerformanceStats // Performance statistics
+	ProgressDescription string                  // Description for progress bar
 }
 
 // NewTournament creates a new tournament with specified parameters
@@ -40,15 +41,23 @@ func NewTournament(models []EvaluationModel, numGames, maxDepth int, useStandard
 	// Check GPU availability
 	gpuAvailable := evaluation.IsGPUAvailable()
 
+	// Create standardAI with GPU if available
+	var standardAI evaluation.Evaluation
+	if gpuAvailable {
+		standardAI = evaluation.NewGPUMixedEvaluation(evaluation.V1Coeff)
+	} else {
+		standardAI = evaluation.NewMixedEvaluation()
+	}
+
 	return &Tournament{
 		Models:      models,
 		Results:     make([]TournamentResult, 0),
 		NumGames:    numGames,
 		MaxDepth:    maxDepth,
-		StandardAI:  evaluation.NewMixedEvaluation(),
+		StandardAI:  standardAI,
 		UseStandard: useStandard,
 		UseGPU:      gpuAvailable,
-		Stats:       NewPerformanceStats(),
+		Stats:       stats.NewPerformanceStats(),
 	}
 }
 
@@ -340,7 +349,21 @@ func (t *Tournament) playGame(blackEval, whiteEval evaluation.Evaluation) game.P
 		// Make a move if possible
 		if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
 			moveStart := time.Now()
-			pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+
+			var pos game.Position
+			if t.UseGPU {
+				// Try GPU solve first for both players
+				gpuPos, success := evaluation.GPUSolve(*g, g.CurrentPlayer, t.MaxDepth)
+				if success {
+					pos = gpuPos
+				} else {
+					// Fall back to regular solve
+					pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+				}
+			} else {
+				pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
+			}
+
 			moveTime := time.Since(moveStart)
 
 			if t.Stats != nil {
@@ -369,7 +392,10 @@ func (t *Tournament) playGame(blackEval, whiteEval evaluation.Evaluation) game.P
 // createEvaluationFromModel creates a custom evaluation from model coefficients
 func (t *Tournament) createEvaluationFromModel(model EvaluationModel) evaluation.Evaluation {
 	if t.UseGPU {
-		return evaluation.NewGPUMixedEvaluation(model.Coeffs)
+		// Ensure GPU coefficients are set properly for this model
+		gpuEval := evaluation.NewGPUMixedEvaluation(model.Coeffs)
+		evaluation.SetCUDACoefficients(model.Coeffs)
+		return gpuEval
 	}
 	return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 }

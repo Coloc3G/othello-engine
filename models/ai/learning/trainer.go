@@ -77,10 +77,17 @@ func (t *Trainer) StartTraining(generations int) {
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
 
-		// NEW: If after 3 or more generations no model has any wins, reinforce population aggressively
+		// Modify this reinforcement section - use gentler reinforcement
 		if gen >= 3 && calculateAverageWins(t.Models) == 0 {
-			fmt.Println("No wins detected over recent generations. Reinforcing population!")
-			t.reinforcePopulation()
+			fmt.Println("No wins detected. Using more aggressive exploration for this generation.")
+			// Instead of reinforcing the whole population, just increase mutation rates temporarily
+			t.MutationRate += 0.1
+			if t.MutationRate > 0.8 {
+				t.MutationRate = 0.8
+			}
+		} else {
+			// Return to normal mutation rate
+			t.MutationRate = 0.3
 		}
 
 		// Create next generation if not last generation
@@ -188,24 +195,4 @@ func (t *Trainer) EvaluateWithTournament() {
 	} else if bestIdx == len(t.Models) {
 		fmt.Println("Standard AI won the tournament!")
 	}
-}
-
-func (t *Trainer) reinforcePopulation() {
-	// For all models, apply a heavy mutation to force exploration.
-	for i := range t.Models {
-		t.Models[i].Coeffs.MaterialCoeffs = heavyMutate(t.Models[i].Coeffs.MaterialCoeffs)
-		t.Models[i].Coeffs.MobilityCoeffs = heavyMutate(t.Models[i].Coeffs.MobilityCoeffs)
-		t.Models[i].Coeffs.CornersCoeffs = heavyMutate(t.Models[i].Coeffs.CornersCoeffs)
-		t.Models[i].Coeffs.ParityCoeffs = heavyMutate(t.Models[i].Coeffs.ParityCoeffs)
-		t.Models[i].Coeffs.StabilityCoeffs = heavyMutate(t.Models[i].Coeffs.StabilityCoeffs)
-		t.Models[i].Coeffs.FrontierCoeffs = heavyMutate(t.Models[i].Coeffs.FrontierCoeffs)
-	}
-}
-
-func calculateAverageWins(models []EvaluationModel) int {
-	total := 0
-	for _, m := range models {
-		total += m.Wins
-	}
-	return total / len(models)
 }

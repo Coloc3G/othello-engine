@@ -13,18 +13,47 @@ func NewFrontierEvaluation() *FrontierEvaluation {
 	return &FrontierEvaluation{}
 }
 
-func (e *FrontierEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	opponent := game.GetOtherPlayer(g.Players, player.Color)
+// Add a raw evaluation function that doesn't normalize the score
+func (e *FrontierEvaluation) rawEvaluate(b game.Board, player game.Player) int {
+	opponent := game.GetOpponentColor(player.Color)
+	playerFrontier := 0
+	opponentFrontier := 0
 
-	playerFrontier := countFrontierDiscs(b, player.Color)
-	opponentFrontier := countFrontierDiscs(b, opponent.Color)
+	// Direction vectors for checking neighboring cells
+	dx := []int{-1, -1, -1, 0, 0, 1, 1, 1}
+	dy := []int{-1, 0, 1, -1, 1, -1, 0, 1}
 
-	// On veut minimiser le nombre de pièces frontalières, donc un score négatif
-	if playerFrontier+opponentFrontier == 0 {
-		return 0
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if b[i][j] == player.Color {
+				// Check if this piece is adjacent to any empty square
+				for k := 0; k < 8; k++ {
+					nx, ny := i+dx[k], j+dy[k]
+					if nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[nx][ny] == game.Empty {
+						playerFrontier++
+						break // Count each piece only once
+					}
+				}
+			} else if b[i][j] == opponent {
+				// Same check for opponent pieces
+				for k := 0; k < 8; k++ {
+					nx, ny := i+dx[k], j+dy[k]
+					if nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[nx][ny] == game.Empty {
+						opponentFrontier++
+						break // Count each piece only once
+					}
+				}
+			}
+		}
 	}
 
-	return -100 * (playerFrontier - opponentFrontier) / (playerFrontier + opponentFrontier)
+	// Simple difference, but inverted (fewer frontier discs is better)
+	return opponentFrontier - playerFrontier
+}
+
+// Evaluate computes the frontier score
+func (e *FrontierEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
+	return e.rawEvaluate(b, player)
 }
 
 // countFrontierDiscs compte le nombre de pièces frontalières pour un joueur donné

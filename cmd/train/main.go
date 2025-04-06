@@ -14,9 +14,9 @@ func main() {
 	// Parse command-line flags
 	generations := flag.Int("generations", 50, "Number of generations to run")
 	populationSize := flag.Int("population", 60, "Population size")
-	numGames := flag.Int("games", 10, "Number of games per model evaluation")
+	numGames := flag.Int("games", 20, "Number of games per model evaluation")
 	depth := flag.Int("depth", 5, "Search depth for AI")
-	useGPU := flag.Bool("gpu", true, "Use GPU acceleration if available")
+	useGPU := flag.Bool("gpu", false, "Use GPU acceleration if available")
 	gpuOnly := flag.Bool("gpu-only", false, "Run in GPU-only mode (no CPU fallback)")
 	tournamentMode := flag.Bool("tournament", false, "Use tournament-based evaluation")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")

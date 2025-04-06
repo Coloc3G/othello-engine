@@ -1,108 +1,52 @@
 package evaluation
 
 import (
+	"sort"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/stats"
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
-// SolveWithStats is like Solve but also collects performance statistics
-func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation, perfStats *stats.PerformanceStats) game.Position {
-	startTime := time.Now()
-
-	// No cache lookup - directly compute the best move
-	bestScore := -1 << 31
-	var bestMove game.Position
-
-	// Track which source actually computed this evaluation
-	cpuEvalTime := time.Duration(0)
-
-	validMoves := game.ValidMoves(g.Board, player.Color)
-	for _, move := range validMoves {
-		newBoard, _ := game.GetNewBoardAfterMove(g.Board, move, player)
-
-		var childScore int
-
-		// Use GPU or CPU evaluation as appropriate
-		if gpuEval, isGPUEval := eval.(*GPUMixedEvaluation); isGPUEval && IsGPUAvailable() {
-			// Try GPU evaluation first
-			gpuStartTime := time.Now()
-
-			// Try to use GPU acceleration
-			scores := EvaluateStatesCUDA([]game.Board{newBoard}, []game.Piece{player.Color})
-
-			if len(scores) > 0 {
-				// GPU evaluation succeeded
-				childScore = scores[0]
-
-				// Log GPU performance if stats available
-				if perfStats != nil {
-					gpuTime := time.Since(gpuStartTime)
-					perfStats.RecordOperation("gpu_eval", gpuTime)
-					perfStats.GPUSuccesses++
-				}
-			} else {
-				// GPU evaluation failed, fall back to CPU
-				fallbackStartTime := time.Now()
-				childScore = MMAB(g, newBoard, player, depth-1, false, -1<<31, 1<<31-1, gpuEval, perfStats)
-
-				// Log fallback performance if stats available
-				if perfStats != nil {
-					fallbackTime := time.Since(fallbackStartTime)
-					perfStats.RecordOperation("gpu_fallback", fallbackTime)
-					cpuEvalTime += fallbackTime
-				}
-			}
-		} else {
-			// Use CPU evaluation
-			cpuStartTime := time.Now()
-			childScore = MMAB(g, newBoard, player, depth-1, false, -1<<31, 1<<31-1, eval, perfStats)
-
-			// Log CPU performance if stats available
-			if perfStats != nil {
-				cpuTime := time.Since(cpuStartTime)
-				perfStats.RecordOperation("cpu_eval", cpuTime)
-				cpuEvalTime += cpuTime
-			}
-		}
-
-		// Update best move
-		if childScore > bestScore {
-			bestScore = childScore
-			bestMove = move
-		}
-	}
-
-	// Log total solve time if stats available
-	if perfStats != nil {
-		totalTime := time.Since(startTime)
-		perfStats.RecordOperation("solve_total", totalTime)
-
-		// Record which was dominant in this evaluation
-		if _, isGPUEval := eval.(*GPUMixedEvaluation); isGPUEval && cpuEvalTime < totalTime/2 {
-			perfStats.RecordOperation("solve_gpu_dominant", 0)
-		} else {
-			perfStats.RecordOperation("solve_cpu_dominant", 0)
-		}
-	}
-
-	return bestMove
-}
-
 // Solve finds the best move for a player using minimax with alpha-beta pruning
 func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Position {
-	// This is a simpler version without performance tracking
 	bestScore := -1 << 31
 	var bestMove game.Position
 
 	validMoves := game.ValidMoves(g.Board, player.Color)
+	if len(validMoves) == 0 {
+		return game.Position{Row: -1, Col: -1}
+	}
+
+	// If only one move is available, return it immediately
+	if len(validMoves) == 1 {
+		return validMoves[0]
+	}
+
+	// Sort moves by row,col for deterministic ordering that matches CUDA implementation
+	sort.Slice(validMoves, func(i, j int) bool {
+		if validMoves[i].Row == validMoves[j].Row {
+			return validMoves[i].Col < validMoves[j].Col
+		}
+		return validMoves[i].Row < validMoves[j].Row
+	})
+
+	// Use same alpha-beta bounds as CUDA implementation
+	alpha := -1 << 31
+	beta := 1<<31 - 1
+
 	for _, move := range validMoves {
 		newBoard, _ := game.GetNewBoardAfterMove(g.Board, move, player)
-		childScore := MMAB(g, newBoard, player, depth-1, false, -1<<31, 1<<31-1, eval, nil)
+		childScore := MMAB(g, newBoard, player, depth-1, false, alpha, beta, eval, nil)
+
 		if childScore > bestScore {
 			bestScore = childScore
 			bestMove = move
+		}
+
+		// Update alpha for pruning - must match CUDA implementation
+		if childScore > alpha {
+			alpha = childScore
 		}
 	}
 
@@ -131,45 +75,83 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 		return score
 	}
 
-	var score int
+	// Determine current player
+	var moves []game.Position
+	if max {
+		// Maximizing player (our player)
+		moves = game.ValidMoves(node, player.Color)
+	} else {
+		// Minimizing player (opponent)
+		opponent := game.GetOtherPlayer(g.Players, player.Color)
+		moves = game.ValidMoves(node, opponent.Color)
+	}
 
 	// If no valid moves, pass turn
-	oplayer := game.GetOtherPlayer(g.Players, player.Color)
-	if (max && !game.HasAnyMoves(node, player.Color)) || (!max && !game.HasAnyMoves(node, oplayer.Color)) {
+	if len(moves) == 0 {
 		return MMAB(g, node, player, depth-1, !max, alpha, beta, eval, perfStats)
 	}
 
+	// Sort moves by row,col for deterministic ordering that matches CUDA implementation
+	sort.Slice(moves, func(i, j int) bool {
+		if moves[i].Row == moves[j].Row {
+			return moves[i].Col < moves[j].Col
+		}
+		return moves[i].Row < moves[j].Row
+	})
+
 	if max {
-		score = -1 << 31
-		for _, move := range game.ValidMoves(node, player.Color) {
+		// Maximizing player (our player)
+		bestScore := -1 << 31
+		for _, move := range moves {
+			// Create new board with this move
 			newNode, _ := game.GetNewBoardAfterMove(node, move, player)
-			childScore := MMAB(g, newNode, player, depth-1, false, alpha, beta, eval, perfStats)
-			if childScore > score {
-				score = childScore
+
+			// Recursive evaluation
+			score := MMAB(g, newNode, player, depth-1, false, alpha, beta, eval, perfStats)
+
+			// Update best score
+			if score > bestScore {
+				bestScore = score
 			}
+
+			// Update alpha for pruning
 			if score > alpha {
 				alpha = score
 			}
+
+			// Alpha-beta pruning
 			if beta <= alpha {
 				break
 			}
 		}
+		return bestScore
 	} else {
-		score = 1<<31 - 1
-		for _, move := range game.ValidMoves(node, oplayer.Color) {
-			newNode, _ := game.GetNewBoardAfterMove(node, move, oplayer)
-			childScore := MMAB(g, newNode, player, depth-1, true, alpha, beta, eval, perfStats)
-			if childScore < score {
-				score = childScore
+		// Minimizing player (opponent)
+		bestScore := 1<<31 - 1
+		opponent := game.GetOtherPlayer(g.Players, player.Color)
+
+		for _, move := range moves {
+			// Create new board with this move
+			newNode, _ := game.GetNewBoardAfterMove(node, move, opponent)
+
+			// Recursive evaluation
+			score := MMAB(g, newNode, player, depth-1, true, alpha, beta, eval, perfStats)
+
+			// Update best score
+			if score < bestScore {
+				bestScore = score
 			}
+
+			// Update beta for pruning
 			if score < beta {
 				beta = score
 			}
+
+			// Alpha-beta pruning
 			if beta <= alpha {
 				break
 			}
 		}
+		return bestScore
 	}
-
-	return score
 }

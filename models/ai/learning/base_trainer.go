@@ -3,7 +3,6 @@ package learning
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"sort"
 	"time"
@@ -43,17 +42,17 @@ func (t *BaseTrainer) createNextGeneration() {
 
 	newModels := make([]EvaluationModel, t.PopulationSize)
 
-	// Keep the best models (elitism)
-	eliteCount := t.PopulationSize / 5
+	// Increase elitism to preserve more good models
+	eliteCount := t.PopulationSize / 4 // 25% elitism instead of 20%
 	copy(newModels[:eliteCount], t.Models[:eliteCount])
 
 	// Fill the rest with crossover and mutation
 	for i := eliteCount; i < t.PopulationSize; i++ {
 		crossoverStart := time.Now()
 
-		// Select parents using tournament selection
-		parent1 := t.tournamentSelect(3)
-		parent2 := t.tournamentSelect(3)
+		// Use larger tournament size to focus on better models
+		parent1 := t.tournamentSelect(5) // Increased from 3
+		parent2 := t.tournamentSelect(5) // Increased from 3
 
 		// Crossover
 		child := t.crossover(parent1, parent2)
@@ -133,60 +132,19 @@ func (t *BaseTrainer) crossover(parent1, parent2 EvaluationModel) EvaluationMode
 	return child
 }
 
-const maxMutationDelta = 100 // fixed maximum change for each coefficient
-
 // mutateModel applies random mutations to a model
 func (t *BaseTrainer) mutateModel(model EvaluationModel) EvaluationModel {
 	mutated := model
 
-	// Mutate each coefficient with probability = mutation rate
-	for i := 0; i < 3; i++ {
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.MaterialCoeffs[i] = clampMutation(model.Coeffs.MaterialCoeffs[i], 100)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.MobilityCoeffs[i] = clampMutation(model.Coeffs.MobilityCoeffs[i], 50)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.CornersCoeffs[i] = clampMutation(model.Coeffs.CornersCoeffs[i], 200)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.ParityCoeffs[i] = clampMutation(model.Coeffs.ParityCoeffs[i], 100)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.StabilityCoeffs[i] = clampMutation(model.Coeffs.StabilityCoeffs[i], 50)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.FrontierCoeffs[i] = clampMutation(model.Coeffs.FrontierCoeffs[i], 30)
-		}
+	// Use the utils package for mutation
+	mutated.Coeffs = MutateCoefficients(model.Coeffs)
+
+	// Give the mutated model a name for tracking
+	if mutated.Coeffs.Name == "" {
+		mutated.Coeffs.Name = fmt.Sprintf("Model_Gen%d", t.Generation)
 	}
 
 	return mutated
-}
-
-// clampMutation applies a random mutation and ensures the value stays positive
-func clampMutation(value, maxDelta int) int {
-	// Apply random delta between -maxDelta and +maxDelta
-	delta := rand.Intn(maxDelta*2+1) - maxDelta
-	result := value + delta
-	if result < 0 {
-		return 0
-	}
-	return result
-}
-
-// Updated heavyMutate using fixed delta instead of a percentage multiplier
-func heavyMutate(arr []int) []int {
-	newArr := make([]int, len(arr))
-	for i, val := range arr {
-		delta := rand.Intn(2*maxMutationDelta+1) - maxMutationDelta
-		newVal := val + delta
-		if newVal < 1 {
-			newVal = 1
-		}
-		newArr[i] = newVal
-	}
-	return newArr
 }
 
 // sortModelsByFitness sorts models by fitness in descending order

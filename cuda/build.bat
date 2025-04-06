@@ -38,15 +38,6 @@ REM Check if build succeeded
 if exist cuda_othello.dll (
     echo Build successful: cuda_othello.dll created
     
-    REM Verify exports
-    echo.
-    echo Verifying DLL exports...
-    where dumpbin >nul 2>&1
-    if %ERRORLEVEL% EQU 0 (
-        dumpbin /EXPORTS cuda_othello.dll | findstr /i "initZobristTable evaluateAndFindBestMoves"
-        echo.
-    )
-    
     REM Copy to necessary directories
     echo Copying DLL files...
     copy cuda_othello.dll ..\ /Y
@@ -58,10 +49,3 @@ if exist cuda_othello.dll (
 )
 
 echo CUDA build complete!
-
-REM Compile and run the test utility
-gcc -o test_dll.exe test_dll.c
-if %ERRORLEVEL% EQU 0 (
-    echo Running export test...
-    test_dll.exe
-)

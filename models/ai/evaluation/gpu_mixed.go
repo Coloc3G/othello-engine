@@ -1,7 +1,8 @@
 package evaluation
 
 import (
-	"sync"
+	"fmt"
+	"math/rand"
 
 	"github.com/Coloc3G/othello-engine/models/game"
 )
@@ -20,24 +21,13 @@ type GPUMixedEvaluation struct {
 	Coeffs EvaluationCoefficients
 
 	// Batch evaluation management
-	batchSize      int
-	batchMutex     sync.Mutex
-	boardBatch     []game.Board
-	playerBatch    []game.Piece
-	batchIsRunning bool
-
-	// Stats
-	hitCount  int
-	missCount int
+	batchSize int
 }
 
 // NewGPUMixedEvaluation creates a new GPU-accelerated mixed evaluation
 func NewGPUMixedEvaluation(coeffs EvaluationCoefficients) *GPUMixedEvaluation {
-	// Initialize CUDA
-	gpuAvailable := InitCUDA()
-
-	// Set coefficients if GPU is available
-	if gpuAvailable {
+	// Set the coefficients immediately if we're creating a GPU evaluator
+	if IsGPUAvailable() {
 		SetCUDACoefficients(coeffs)
 	}
 
@@ -49,8 +39,7 @@ func NewGPUMixedEvaluation(coeffs EvaluationCoefficients) *GPUMixedEvaluation {
 		StabilityEvaluation: NewStabilityEvaluation(),
 		FrontierEvaluation:  NewFrontierEvaluation(),
 		Coeffs:              coeffs,
-		batchSize:           8192, // Large batch size for modern GPUs
-		batchIsRunning:      false,
+		batchSize:           256, // More moderate batch size
 	}
 }
 
@@ -80,6 +69,19 @@ func (e *GPUMixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Pla
 	// Direct GPU evaluation - no caching
 	scores := EvaluateStatesCUDA([]game.Board{b}, []game.Piece{player.Color})
 	if len(scores) > 0 {
+		// Add verification - occasionally compare with CPU evaluation
+		if rand.Float64() < 0.01 { // Increased verification rate from 0.001 to 0.01
+			cpuScore := e.evaluateCPU(g, b, player)
+			if abs(scores[0]-cpuScore) > 10 { // Reduced threshold for being more strict
+				// Log the discrepancy and use CPU score instead
+				fmt.Printf("ERROR: GPU/CPU eval difference: GPU=%d, CPU=%d (diff=%d)\n",
+					scores[0], cpuScore, scores[0]-cpuScore)
+				// Debug: print board
+				fmt.Printf("Board causing evaluation difference:\n")
+				printBoardDetail(b)
+				return cpuScore // Use CPU score as it's more reliable
+			}
+		}
 		return scores[0]
 	}
 
@@ -87,23 +89,73 @@ func (e *GPUMixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Pla
 	return e.evaluateCPU(g, b, player)
 }
 
+// PrintBoardDetail prints a board in detailed format
+func printBoardDetail(b game.Board) {
+	fmt.Println("  0 1 2 3 4 5 6 7")
+	for i := 0; i < 8; i++ {
+		fmt.Printf("%d ", i)
+		for j := 0; j < 8; j++ {
+			switch b[i][j] {
+			case game.Black:
+				fmt.Print("B ")
+			case game.White:
+				fmt.Print("W ")
+			default:
+				fmt.Print(". ")
+			}
+		}
+		fmt.Println()
+	}
+}
+
+// VerifyWithCPU performs explicit verification of GPU vs CPU evaluations
+func (e *GPUMixedEvaluation) VerifyWithCPU(g game.Game, b game.Board, player game.Player) bool {
+	// Get GPU evaluation
+	gpuScore := e.Evaluate(g, b, player)
+
+	// Get CPU evaluation
+	cpuScore := e.evaluateCPU(g, b, player)
+
+	// Compare results
+	diff := abs(gpuScore - cpuScore)
+	if diff > 0 {
+		fmt.Printf("GPU/CPU evaluation difference: GPU=%d, CPU=%d (diff=%d)\n",
+			gpuScore, cpuScore, diff)
+		return false
+	}
+
+	return true
+}
+
+// Simple absolute value function
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
 // evaluateCPU is a fallback CPU implementation
 func (e *GPUMixedEvaluation) evaluateCPU(g game.Game, b game.Board, player game.Player) int {
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.computeCoefficients(b)
 
-	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
-	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
-	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
+	// Use the raw evaluation functions that match the CUDA implementation
+	materialScore := e.MaterialEvaluation.rawEvaluate(b, player)
+	mobilityScore := e.MobilityEvaluation.rawEvaluate(b, player)
+	cornersScore := e.CornersEvaluation.rawEvaluate(b, player)
 	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
 	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
+	frontierScore := e.FrontierEvaluation.rawEvaluate(b, player)
 
-	return materialCoeff*materialScore +
+	// Calculate final score using same formula as CUDA
+	score := materialCoeff*materialScore +
 		mobilityCoeff*mobilityScore +
 		cornersCoeff*cornersScore +
 		parityCoeff*parityScore +
 		stabilityCoeff*stabilityScore +
 		frontierCoeff*frontierScore
+
+	return score
 }
 
 // computeCoefficients returns the coefficients based on game phase

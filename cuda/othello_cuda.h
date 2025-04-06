@@ -1,5 +1,24 @@
+#include <stdbool.h>
+
 #ifndef OTHELLO_CUDA_H
 #define OTHELLO_CUDA_H
+
+// Define constants first so they can be used throughout the file
+#define BOARD_SIZE 8
+#define EMPTY 0
+#define WHITE 1
+#define BLACK 2
+
+// Define evaluation coefficient structure before it's used
+typedef struct
+{
+  int material_coeff[3];
+  int mobility_coeff[3];
+  int corners_coeff[3];
+  int parity_coeff[3];
+  int stability_coeff[3];
+  int frontier_coeff[3];
+} EvaluationCoefficients;
 
 #ifdef __cplusplus
 extern "C"
@@ -9,13 +28,9 @@ extern "C"
   // Initialize CUDA and return success status (1=success, 0=failure)
   __declspec(dllexport) int initCUDA();
 
-  // Initialize Zobrist hash table for transposition table
-  __declspec(dllexport) void initZobristTable();
-
   // Set evaluation coefficients
   __declspec(dllexport) void setCoefficients(int *material, int *mobility, int *corners,
                                              int *parity, int *stability, int *frontier);
-
   // Evaluate multiple game states in parallel
   __declspec(dllexport) void evaluateStates(int *boards, int *player_colors, int *scores, int num_states);
 
@@ -37,6 +52,18 @@ extern "C"
 
   // Get GPU memory usage statistics
   __declspec(dllexport) void getGPUMemoryInfo(unsigned long long *free_memory, unsigned long long *total_memory);
+
+  // Add debug evaluation function
+  __declspec(dllexport) int debugEvaluateBoard(int *board, int player_color, int *debug_info);
+
+  // Host-side helper function prototypes
+  bool isValidMoveHost(int board[BOARD_SIZE][BOARD_SIZE], int player, int row, int col);
+  void applyMoveHost(int board[BOARD_SIZE][BOARD_SIZE], int player, int row, int col);
+  int getValidMovesHost(int board[BOARD_SIZE][BOARD_SIZE], int player, int moves_r[64], int moves_c[64]);
+  int evaluateBoardHost(int board[BOARD_SIZE][BOARD_SIZE], int player, EvaluationCoefficients coeffs);
+  bool isGameFinishedHost(int board[BOARD_SIZE][BOARD_SIZE]);
+  int minimaxHost(int board[BOARD_SIZE][BOARD_SIZE], int player, int depth, bool maximizing,
+                  int alpha, int beta, int *best_row, int *best_col, EvaluationCoefficients coeffs);
 
 #ifdef __cplusplus
 }

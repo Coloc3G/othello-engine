@@ -29,10 +29,14 @@ type BulkEvaluationResult struct {
 
 // EvaluateAndFindBestMovesBulk performs bulk evaluation and move finding for multiple positions
 // This is optimized for training, where we need to evaluate many positions at once
-func EvaluateAndFindBestMovesBulk(boards []game.Board, players []game.Piece, depths []int) *BulkEvaluationResult {
+// Modify the signature to add 'coeffs EvaluationCoefficients'
+func EvaluateAndFindBestMovesBulk(boards []game.Board, players []game.Piece, depths []int, coeffs EvaluationCoefficients) *BulkEvaluationResult {
 	if !IsGPUAvailable() {
 		return nil
 	}
+
+	// Set the desired coefficients for this evaluation round.
+	SetCUDACoefficients(coeffs)
 
 	numStates := len(boards)
 	if numStates == 0 || numStates != len(players) || numStates != len(depths) {
@@ -125,12 +129,12 @@ func ProcessBatchedMinimax(positions []game.Board, players []game.Piece, searchD
 
 	// Create depths array (all same depth)
 	depths := make([]int, len(positions))
-	for i := range depths {
+	for i := 0; i < len(depths); i++ {
 		depths[i] = searchDepth
 	}
 
-	// Call bulk evaluation
-	result := EvaluateAndFindBestMovesBulk(positions, players, depths)
+	// Pass the desired coefficients (for example, V1Coeff) to the bulk evaluation
+	result := EvaluateAndFindBestMovesBulk(positions, players, depths, V1Coeff)
 	if result == nil {
 		return nil, nil
 	}

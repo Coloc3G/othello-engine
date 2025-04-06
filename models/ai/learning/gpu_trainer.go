@@ -2,7 +2,6 @@ package learning
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
@@ -29,8 +28,7 @@ func NewGPUTrainer(popSize int) *GPUTrainer {
 func (t *GPUTrainer) InitializePopulation() {
 	t.Models = make([]EvaluationModel, t.PopulationSize)
 
-	// Initialize with a reasonable default model - use V2 coefficients as a starting point
-	// as these have been tuned and should be more reasonable
+	// Initialize with V1 model as starting point
 	defaultModel := EvaluationModel{
 		Coeffs:     evaluation.V1Coeff,
 		Generation: 1,
@@ -40,46 +38,12 @@ func (t *GPUTrainer) InitializePopulation() {
 	t.Models[0] = defaultModel
 	t.BestModel = defaultModel
 
-	// Create variations of the default model - using more controlled diversity
+	// Create variations of the default model - using controlled diversity
 	for i := 1; i < t.PopulationSize; i++ {
-		t.Models[i] = createDiverseModel(defaultModel, i)
+		t.Models[i] = t.mutateModel(defaultModel)
 		t.Models[i].Generation = 1
 		t.Models[i].Coeffs.Name = fmt.Sprintf("Initial Model %d", i)
 	}
-}
-
-// createDiverseModel creates a different but not wildly different model for initial population
-func createDiverseModel(baseModel EvaluationModel, index int) EvaluationModel {
-	newModel := baseModel
-
-	// Apply random scaling factors with more moderate ranges
-	materialFactor := 0.8 + rand.Float64()*0.4 // 0.8x to 1.2x
-	mobilityFactor := 0.8 + rand.Float64()*0.4
-	cornersFactor := 0.8 + rand.Float64()*0.4
-	parityFactor := 0.8 + rand.Float64()*0.4
-	stabilityFactor := 0.8 + rand.Float64()*0.4
-	frontierFactor := 0.8 + rand.Float64()*0.4
-
-	// Apply factors to all coefficients with bounds checking
-	for i := 0; i < 3; i++ {
-		// Apply the scaling factors with sensible minimum values
-		newModel.Coeffs.MaterialCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MaterialCoeffs[i])*materialFactor))
-		newModel.Coeffs.MobilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MobilityCoeffs[i])*mobilityFactor))
-		newModel.Coeffs.CornersCoeffs[i] = max(1, int(float64(baseModel.Coeffs.CornersCoeffs[i])*cornersFactor))
-		newModel.Coeffs.ParityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.ParityCoeffs[i])*parityFactor))
-		newModel.Coeffs.StabilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.StabilityCoeffs[i])*stabilityFactor))
-		newModel.Coeffs.FrontierCoeffs[i] = max(1, int(float64(baseModel.Coeffs.FrontierCoeffs[i])*frontierFactor))
-
-		// Apply maximum caps to avoid extreme values
-		newModel.Coeffs.MaterialCoeffs[i] = min(newModel.Coeffs.MaterialCoeffs[i], 1000)
-		newModel.Coeffs.MobilityCoeffs[i] = min(newModel.Coeffs.MobilityCoeffs[i], 500)
-		newModel.Coeffs.CornersCoeffs[i] = min(newModel.Coeffs.CornersCoeffs[i], 2000)
-		newModel.Coeffs.ParityCoeffs[i] = min(newModel.Coeffs.ParityCoeffs[i], 1000)
-		newModel.Coeffs.StabilityCoeffs[i] = min(newModel.Coeffs.StabilityCoeffs[i], 300)
-		newModel.Coeffs.FrontierCoeffs[i] = min(newModel.Coeffs.FrontierCoeffs[i], 200)
-	}
-
-	return newModel
 }
 
 // StartTraining begins the genetic algorithm training process
@@ -121,15 +85,22 @@ func (t *GPUTrainer) StartTraining(generations int) {
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
 
-		// NEW: If after 3 or more generations no model has any wins, reinforce population aggressively
+		// Modify this reinforcement section - use gentler reinforcement
 		if gen >= 3 && calculateAverageWins(t.Models) == 0 {
-			fmt.Println("No wins detected over GPU training generations. Reinforcing population!")
-			t.reinforcePopulation()
+			fmt.Println("No wins detected. Using more aggressive exploration for this generation.")
+			// Instead of reinforcing the whole population, just increase mutation rates temporarily
+			t.MutationRate += 0.1
+			if t.MutationRate > 0.8 {
+				t.MutationRate = 0.8
+			}
+		} else {
+			// Return to normal mutation rate
+			t.MutationRate = 0.3
 		}
 
 		// Create next generation if not last generation
 		if gen < generations {
-			t.createNextGeneration()
+			t.BaseTrainer.createNextGeneration()
 		}
 
 		genTime := time.Since(genStartTime)
@@ -137,18 +108,6 @@ func (t *GPUTrainer) StartTraining(generations int) {
 	}
 
 	fmt.Println("\nTraining completed!")
-}
-
-// reinforcePopulation applies a strong mutation to all models to force exploration.
-func (t *GPUTrainer) reinforcePopulation() {
-	for i := range t.Models {
-		t.Models[i].Coeffs.MaterialCoeffs = heavyMutate(t.Models[i].Coeffs.MaterialCoeffs)
-		t.Models[i].Coeffs.MobilityCoeffs = heavyMutate(t.Models[i].Coeffs.MobilityCoeffs)
-		t.Models[i].Coeffs.CornersCoeffs = heavyMutate(t.Models[i].Coeffs.CornersCoeffs)
-		t.Models[i].Coeffs.ParityCoeffs = heavyMutate(t.Models[i].Coeffs.ParityCoeffs)
-		t.Models[i].Coeffs.StabilityCoeffs = heavyMutate(t.Models[i].Coeffs.StabilityCoeffs)
-		t.Models[i].Coeffs.FrontierCoeffs = heavyMutate(t.Models[i].Coeffs.FrontierCoeffs)
-	}
 }
 
 // calculateAvgFitness calculates the average fitness of the population
@@ -171,15 +130,16 @@ func (t *GPUTrainer) evaluatePopulation() {
 	// Define evaluation function creator based on GPU/CPU
 	createEvalFunc := func(model EvaluationModel) evaluation.Evaluation {
 		if t.UseGPU {
+			// Pre-set coefficients for all models in a batch to prevent concurrent access issues
+			evaluation.SetCUDACoefficients(model.Coeffs)
+
 			// Configure GPU evaluation with larger batch size for better GPU utilization
 			gpuEval := evaluation.NewGPUMixedEvaluation(model.Coeffs)
 			gpuEval.SetBatchSize(1024) // Increase batch size for better GPU utilization
 
-			// Ensure coefficients are set in CUDA
-			evaluation.SetCUDACoefficients(model.Coeffs)
-
 			return gpuEval
 		}
+		fmt.Println("\nEvaluating models with CPU...")
 		return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 	}
 
@@ -187,10 +147,12 @@ func (t *GPUTrainer) evaluatePopulation() {
 	evaluateModelsInParallel(modelPtrs, createEvalFunc, t.MaxDepth, t.NumGames, t.Stats)
 }
 
-// createNextGeneration creates a new generation through selection, crossover and mutation
-func (t *GPUTrainer) createNextGeneration() {
-	// Use the base implementation for simplicity and consistency
-	t.BaseTrainer.createNextGeneration()
+// Simple absolute value function
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // SaveGenerationStats overrides the base trainer's method to include GPU information
@@ -285,7 +247,7 @@ func (t *GPUTrainer) TournamentTraining(generations int) {
 
 		// Create next generation
 		if gen < generations {
-			t.createNextGeneration()
+			t.BaseTrainer.createNextGeneration()
 		}
 
 		genTime := time.Since(genStartTime)
