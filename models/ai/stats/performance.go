@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -129,66 +128,4 @@ func (s *PerformanceStats) IncrementCount(name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Counts[name]++
-}
-
-// PrintSummary prints a summary of the performance statistics
-func (s *PerformanceStats) PrintSummary() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	fmt.Println("\nPerformance Statistics:")
-	fmt.Printf("Total time: %s\n", s.TotalGenerationTime.Round(time.Millisecond))
-	fmt.Printf("Evaluation time: %s (%.1f%%)\n",
-		s.EvaluationTime.Round(time.Millisecond),
-		float64(s.EvaluationTime)/float64(s.TotalGenerationTime)*100)
-
-	fmt.Println("\nGPU vs CPU Performance:")
-
-	// GPU stats
-	if s.GPUEvaluations > 0 {
-		avgGPUTime := s.GPUEvaluationTime / time.Duration(s.GPUEvaluations)
-		fmt.Printf("GPU evaluations: %d (%.1f%% of total)\n",
-			s.GPUEvaluations,
-			float64(s.GPUEvaluations)/float64(s.TotalEvaluations)*100)
-		fmt.Printf("Avg GPU eval time: %s\n", avgGPUTime.Round(time.Microsecond))
-		fmt.Printf("GPU success rate: %.1f%%\n",
-			float64(s.GPUSuccesses)/float64(s.GPUEvaluations)*100)
-	}
-
-	// CPU stats
-	if s.CPUEvaluations > 0 {
-		avgCPUTime := s.CPUEvaluationTime / time.Duration(s.CPUEvaluations)
-		fmt.Printf("CPU evaluations: %d (%.1f%% of total)\n",
-			s.CPUEvaluations,
-			float64(s.CPUEvaluations)/float64(s.TotalEvaluations)*100)
-		fmt.Printf("Avg CPU eval time: %s\n", avgCPUTime.Round(time.Microsecond))
-	}
-
-	// Fallback stats
-	if s.GPUFallbacks > 0 {
-		fmt.Printf("GPU fallbacks: %d (%.1f%% of GPU attempts)\n",
-			s.GPUFallbacks,
-			float64(s.GPUFallbacks)/float64(s.GPUEvaluations)*100)
-		avgFallbackTime := s.GPUFallbackTime / time.Duration(s.GPUFallbacks)
-		fmt.Printf("Avg fallback time: %s\n", avgFallbackTime.Round(time.Microsecond))
-	}
-
-	// Cache performance
-	cacheTotal := s.CacheHits + s.CacheMisses
-	if cacheTotal > 0 {
-		fmt.Printf("\nCache Performance:\n")
-		fmt.Printf("Cache hit rate: %.1f%% (%d hits, %d misses)\n",
-			float64(s.CacheHits)/float64(cacheTotal)*100,
-			s.CacheHits, s.CacheMisses)
-
-		if s.CacheHits > 0 {
-			avgCacheHitTime := s.CacheHitTime / time.Duration(s.CacheHits)
-			fmt.Printf("Avg cache hit time: %s\n", avgCacheHitTime.Round(time.Microsecond))
-
-			if s.CPUCacheHits > 0 || s.GPUCacheHits > 0 {
-				fmt.Printf("CPU cache hits: %d, GPU cache hits: %d\n",
-					s.CPUCacheHits, s.GPUCacheHits)
-			}
-		}
-	}
 }

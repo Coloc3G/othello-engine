@@ -19,6 +19,10 @@ extern "C"
   // Evaluate multiple game states in parallel
   __declspec(dllexport) void evaluateStates(int *boards, int *player_colors, int *scores, int num_states);
 
+  // Evaluate and find best moves for multiple positions in parallel
+  __declspec(dllexport) void evaluateAndFindBestMoves(int *boards, int *player_colors, int *depths,
+                                                      int *scores, int *best_rows, int *best_cols, int num_states);
+
   // Perform minimax search to find best move for a board
   __declspec(dllexport) int findBestMove(int *board, int player_color, int depth, int *best_row, int *best_col);
 

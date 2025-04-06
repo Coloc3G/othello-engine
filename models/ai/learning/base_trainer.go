@@ -29,7 +29,7 @@ func NewBaseTrainer(popSize int) *BaseTrainer {
 	return &BaseTrainer{
 		Models:         make([]EvaluationModel, 0),
 		PopulationSize: popSize,
-		MutationRate:   0.2,
+		MutationRate:   0.3, // increased mutation rate
 		NumGames:       100,
 		MaxDepth:       5,
 		Generation:     1,
@@ -133,6 +133,8 @@ func (t *BaseTrainer) crossover(parent1, parent2 EvaluationModel) EvaluationMode
 	return child
 }
 
+const maxMutationDelta = 100 // fixed maximum change for each coefficient
+
 // mutateModel applies random mutations to a model
 func (t *BaseTrainer) mutateModel(model EvaluationModel) EvaluationModel {
 	mutated := model
@@ -160,6 +162,31 @@ func (t *BaseTrainer) mutateModel(model EvaluationModel) EvaluationModel {
 	}
 
 	return mutated
+}
+
+// clampMutation applies a random mutation and ensures the value stays positive
+func clampMutation(value, maxDelta int) int {
+	// Apply random delta between -maxDelta and +maxDelta
+	delta := rand.Intn(maxDelta*2+1) - maxDelta
+	result := value + delta
+	if result < 0 {
+		return 0
+	}
+	return result
+}
+
+// Updated heavyMutate using fixed delta instead of a percentage multiplier
+func heavyMutate(arr []int) []int {
+	newArr := make([]int, len(arr))
+	for i, val := range arr {
+		delta := rand.Intn(2*maxMutationDelta+1) - maxMutationDelta
+		newVal := val + delta
+		if newVal < 1 {
+			newVal = 1
+		}
+		newArr[i] = newVal
+	}
+	return newArr
 }
 
 // sortModelsByFitness sorts models by fitness in descending order
@@ -201,11 +228,12 @@ func (t *BaseTrainer) SaveModelToFile(filename string, data interface{}) error {
 // SaveGenerationStats saves statistics about the current generation
 func (t *BaseTrainer) SaveGenerationStats(gen int) error {
 	stats := struct {
-		Generation     int             `json:"generation"`
-		BestFitness    float64         `json:"best_fitness"`
-		AvgFitness     float64         `json:"avg_fitness"`
-		BestModel      EvaluationModel `json:"best_model"`
-		Timestamp      string          `json:"timestamp"`
+		Generation     int               `json:"generation"`
+		BestFitness    float64           `json:"best_fitness"`
+		AvgFitness     float64           `json:"avg_fitness"`
+		BestModel      EvaluationModel   `json:"best_model"`
+		AllModels      []EvaluationModel `json:"all_models"`
+		Timestamp      string            `json:"timestamp"`
 		PerformanceLog struct {
 			EvaluationTimeMs int `json:"evaluation_time_ms"`
 			TournamentTimeMs int `json:"tournament_time_ms"`
@@ -213,11 +241,15 @@ func (t *BaseTrainer) SaveGenerationStats(gen int) error {
 			MutationTimeMs   int `json:"mutation_time_ms"`
 			TotalTimeMs      int `json:"total_time_ms"`
 		} `json:"performance"`
+		Stats       map[string]int    `json:"stats_counts"`
+		TimingStats map[string]string `json:"timing_stats"`
 	}{
 		Generation:  gen,
 		BestFitness: t.Models[0].Fitness,
 		BestModel:   t.Models[0],
+		AllModels:   t.Models,
 		Timestamp:   time.Now().Format(time.RFC3339),
+		Stats:       t.Stats.Counts,
 	}
 
 	// Calculate average fitness
@@ -233,6 +265,12 @@ func (t *BaseTrainer) SaveGenerationStats(gen int) error {
 	stats.PerformanceLog.CrossoverTimeMs = int(t.Stats.CrossoverTime.Milliseconds())
 	stats.PerformanceLog.MutationTimeMs = int(t.Stats.MutationTime.Milliseconds())
 	stats.PerformanceLog.TotalTimeMs = int(t.Stats.TotalGenerationTime.Milliseconds())
+
+	// Add detailed timing stats
+	stats.TimingStats = make(map[string]string)
+	for opName, duration := range t.Stats.OpTimes {
+		stats.TimingStats[opName] = duration.String()
+	}
 
 	data, err := json.MarshalIndent(stats, "", "  ")
 	if err != nil {

@@ -1,17 +1,11 @@
 package learning
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
-	"sort"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
-	"github.com/Coloc3G/othello-engine/models/game"
-	"github.com/Coloc3G/othello-engine/models/opening"
-	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
 // GPUTrainer enhances the Trainer with GPU capabilities
@@ -35,20 +29,57 @@ func NewGPUTrainer(popSize int) *GPUTrainer {
 func (t *GPUTrainer) InitializePopulation() {
 	t.Models = make([]EvaluationModel, t.PopulationSize)
 
-	// Initialize with a reasonable default model
+	// Initialize with a reasonable default model - use V2 coefficients as a starting point
+	// as these have been tuned and should be more reasonable
 	defaultModel := EvaluationModel{
-		Coeffs:     evaluation.V2Coeff,
+		Coeffs:     evaluation.V1Coeff,
 		Generation: 1,
 	}
 
+	// Set the first model to the default
 	t.Models[0] = defaultModel
 	t.BestModel = defaultModel
 
-	// Create variations of the default model
+	// Create variations of the default model - using more controlled diversity
 	for i := 1; i < t.PopulationSize; i++ {
-		t.Models[i] = t.mutateModel(defaultModel)
+		t.Models[i] = createDiverseModel(defaultModel, i)
 		t.Models[i].Generation = 1
+		t.Models[i].Coeffs.Name = fmt.Sprintf("Initial Model %d", i)
 	}
+}
+
+// createDiverseModel creates a different but not wildly different model for initial population
+func createDiverseModel(baseModel EvaluationModel, index int) EvaluationModel {
+	newModel := baseModel
+
+	// Apply random scaling factors with more moderate ranges
+	materialFactor := 0.8 + rand.Float64()*0.4 // 0.8x to 1.2x
+	mobilityFactor := 0.8 + rand.Float64()*0.4
+	cornersFactor := 0.8 + rand.Float64()*0.4
+	parityFactor := 0.8 + rand.Float64()*0.4
+	stabilityFactor := 0.8 + rand.Float64()*0.4
+	frontierFactor := 0.8 + rand.Float64()*0.4
+
+	// Apply factors to all coefficients with bounds checking
+	for i := 0; i < 3; i++ {
+		// Apply the scaling factors with sensible minimum values
+		newModel.Coeffs.MaterialCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MaterialCoeffs[i])*materialFactor))
+		newModel.Coeffs.MobilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MobilityCoeffs[i])*mobilityFactor))
+		newModel.Coeffs.CornersCoeffs[i] = max(1, int(float64(baseModel.Coeffs.CornersCoeffs[i])*cornersFactor))
+		newModel.Coeffs.ParityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.ParityCoeffs[i])*parityFactor))
+		newModel.Coeffs.StabilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.StabilityCoeffs[i])*stabilityFactor))
+		newModel.Coeffs.FrontierCoeffs[i] = max(1, int(float64(baseModel.Coeffs.FrontierCoeffs[i])*frontierFactor))
+
+		// Apply maximum caps to avoid extreme values
+		newModel.Coeffs.MaterialCoeffs[i] = min(newModel.Coeffs.MaterialCoeffs[i], 1000)
+		newModel.Coeffs.MobilityCoeffs[i] = min(newModel.Coeffs.MobilityCoeffs[i], 500)
+		newModel.Coeffs.CornersCoeffs[i] = min(newModel.Coeffs.CornersCoeffs[i], 2000)
+		newModel.Coeffs.ParityCoeffs[i] = min(newModel.Coeffs.ParityCoeffs[i], 1000)
+		newModel.Coeffs.StabilityCoeffs[i] = min(newModel.Coeffs.StabilityCoeffs[i], 300)
+		newModel.Coeffs.FrontierCoeffs[i] = min(newModel.Coeffs.FrontierCoeffs[i], 200)
+	}
+
+	return newModel
 }
 
 // StartTraining begins the genetic algorithm training process
@@ -90,21 +121,34 @@ func (t *GPUTrainer) StartTraining(generations int) {
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
 
-		// Create next generation
+		// NEW: If after 3 or more generations no model has any wins, reinforce population aggressively
+		if gen >= 3 && calculateAverageWins(t.Models) == 0 {
+			fmt.Println("No wins detected over GPU training generations. Reinforcing population!")
+			t.reinforcePopulation()
+		}
+
+		// Create next generation if not last generation
 		if gen < generations {
 			t.createNextGeneration()
 		}
 
 		genTime := time.Since(genStartTime)
 		t.Stats.RecordOperation("generation", genTime)
-
-		// Print performance statistics every 5 generations
-		if gen%5 == 0 || gen == generations {
-			t.Stats.PrintSummary()
-		}
 	}
 
 	fmt.Println("\nTraining completed!")
+}
+
+// reinforcePopulation applies a strong mutation to all models to force exploration.
+func (t *GPUTrainer) reinforcePopulation() {
+	for i := range t.Models {
+		t.Models[i].Coeffs.MaterialCoeffs = heavyMutate(t.Models[i].Coeffs.MaterialCoeffs)
+		t.Models[i].Coeffs.MobilityCoeffs = heavyMutate(t.Models[i].Coeffs.MobilityCoeffs)
+		t.Models[i].Coeffs.CornersCoeffs = heavyMutate(t.Models[i].Coeffs.CornersCoeffs)
+		t.Models[i].Coeffs.ParityCoeffs = heavyMutate(t.Models[i].Coeffs.ParityCoeffs)
+		t.Models[i].Coeffs.StabilityCoeffs = heavyMutate(t.Models[i].Coeffs.StabilityCoeffs)
+		t.Models[i].Coeffs.FrontierCoeffs = heavyMutate(t.Models[i].Coeffs.FrontierCoeffs)
+	}
 }
 
 // calculateAvgFitness calculates the average fitness of the population
@@ -127,11 +171,11 @@ func (t *GPUTrainer) evaluatePopulation() {
 	// Define evaluation function creator based on GPU/CPU
 	createEvalFunc := func(model EvaluationModel) evaluation.Evaluation {
 		if t.UseGPU {
-			// Configurer l'évaluation GPU avec une taille de batch plus grande pour mieux utiliser le GPU
+			// Configure GPU evaluation with larger batch size for better GPU utilization
 			gpuEval := evaluation.NewGPUMixedEvaluation(model.Coeffs)
-			gpuEval.SetBatchSize(512) // Augmenter la taille des lots
+			gpuEval.SetBatchSize(1024) // Increase batch size for better GPU utilization
 
-			// Vérifier que les coefficients sont bien définis dans le GPU
+			// Ensure coefficients are set in CUDA
 			evaluation.SetCUDACoefficients(model.Coeffs)
 
 			return gpuEval
@@ -143,334 +187,24 @@ func (t *GPUTrainer) evaluatePopulation() {
 	evaluateModelsInParallel(modelPtrs, createEvalFunc, t.MaxDepth, t.NumGames, t.Stats)
 }
 
-// getTotalMatchCount calculates the total number of matches to be played in evaluation
-func (t *GPUTrainer) getTotalMatchCount() int {
-	// Each model plays against the standard model
-	// Each game is played twice (each player plays once as black and once as white)
-	return len(t.Models) * len(opening.KNOWN_OPENINGS) * 2
-}
-
-// evaluateModel evaluates a single model by playing games against reference players
-// Returns the number of matches played
-func (t *GPUTrainer) evaluateModel(model *EvaluationModel, incrementBarFunc func()) {
-	// Reset statistics
-	model.Wins = 0
-	model.Losses = 0
-	model.Draws = 0
-
-	// Create evaluation function with model coefficients
-	evalFunc := t.createEvaluationFromModel(*model)
-
-	// Pour l'évaluation GPU, on doit accumuler les états de jeu pour évaluation en lots
-	var boardsToEvaluate []game.Board
-	var playersToEvaluate []game.Piece
-	const batchSize = 64 // Taille optimale du lot pour GPU
-
-	// Fonction d'évaluation en lots pour GPU
-	evaluateBatch := func() {
-		if len(boardsToEvaluate) > 0 && t.UseGPU {
-			// Évaluer le lot entier d'un coup sur GPU
-			evaluation.EvaluateStatesCUDA(boardsToEvaluate, playersToEvaluate)
-			// Réinitialiser les lots
-			boardsToEvaluate = nil
-			playersToEvaluate = nil
-		}
-	}
-
-	// Use a standard evaluation for opponent
-	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
-
-	for _, o := range opening.KNOWN_OPENINGS {
-		// Play each opening twice, alternating who plays first
-		for i := range 2 {
-			// Create a new game
-			g := game.NewGame("AI", "AI")
-
-			// Apply opening
-			t.applyOpening(g, o)
-
-			// Determine player model (alternate between games)
-			playerModelIdx := i % 2
-			playerModel := &g.Players[playerModelIdx]
-
-			// Play the game until completion
-			for !game.IsGameFinished(g.Board) {
-				if g.CurrentPlayer.Color == playerModel.Color {
-					// Model player's turn
-					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-						var pos game.Position
-
-						// Utilisation améliorée du GPU
-						if t.UseGPU {
-							// Accumuler cet état de jeu pour évaluation en lot
-							boardsToEvaluate = append(boardsToEvaluate, g.Board)
-							playersToEvaluate = append(playersToEvaluate, g.CurrentPlayer.Color)
-
-							// Si on atteint la taille du lot, évaluer en masse
-							if len(boardsToEvaluate) >= batchSize {
-								evaluateBatch()
-							}
-
-							gpuPos, success := GPUSolve(*g, g.CurrentPlayer, t.MaxDepth)
-							if success {
-								pos = gpuPos
-							} else {
-								pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
-							}
-						} else {
-							// Use CPU search
-							pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
-						}
-
-						g.ApplyMove(pos)
-					} else {
-						// Skip turn if no valid moves
-						g.CurrentPlayer = g.GetOtherPlayerMethod()
-					}
-				} else {
-					// Standard player's turn
-					if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-						// Always use CPU search for standard player for consistency
-						pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, standardEval)
-						g.ApplyMove(pos)
-					} else {
-						// Skip turn if no valid moves
-						g.CurrentPlayer = g.GetOtherPlayerMethod()
-					}
-				}
-			}
-
-			// Évaluer tous les états restants
-			evaluateBatch()
-
-			// Determine winner
-			blackCount, whiteCount := game.CountPieces(g.Board)
-
-			// Record game result based on player model's perspective
-			if playerModel.Color == game.Black {
-				if blackCount > whiteCount {
-					model.Wins++
-				} else if blackCount < whiteCount {
-					model.Losses++
-				} else {
-					model.Draws++
-				}
-			} else {
-				if whiteCount > blackCount {
-					model.Wins++
-				} else if whiteCount < blackCount {
-					model.Losses++
-				} else {
-					model.Draws++
-				}
-			}
-
-			// Increment progress bar for each game played
-			incrementBarFunc()
-		}
-	}
-
-	// Calculate fitness
-	model.Fitness = float64(model.Wins) + float64(model.Draws)*0.5
-	model.Generation = t.Generation
-}
-
-// applyOpening selects a random opening and applies it to the game
-func (t *GPUTrainer) applyOpening(g *game.Game, o opening.Opening) {
-	transcript := o.Transcript
-
-	// Apply the moves from the opening transcript
-	for i := 0; i < len(transcript); i += 2 {
-		if i+1 >= len(transcript) {
-			break // Ensure we have a complete move (row and column)
-		}
-
-		move := utils.AlgebraicToPosition(transcript[i : i+2])
-
-		// Apply the move
-		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer)
-		g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
-	}
-}
-
-// createEvaluationFromModel creates a custom evaluation using model coefficients
-func (t *GPUTrainer) createEvaluationFromModel(model EvaluationModel) evaluation.Evaluation {
-	if t.UseGPU {
-		return evaluation.NewGPUMixedEvaluation(model.Coeffs)
-	}
-	return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
-}
-
 // createNextGeneration creates a new generation through selection, crossover and mutation
 func (t *GPUTrainer) createNextGeneration() {
-	// Reuse the Trainer's implementation
-	newModels := make([]EvaluationModel, t.PopulationSize)
-
-	// Keep the best models (elitism)
-	eliteCount := t.PopulationSize / 5
-	copy(newModels[:eliteCount], t.Models[:eliteCount])
-
-	// Fill the rest with crossover and mutation
-	for i := eliteCount; i < t.PopulationSize; i++ {
-		// Select parents using tournament selection
-		parent1 := t.tournamentSelect(3)
-		parent2 := t.tournamentSelect(3)
-
-		// Crossover
-		child := t.crossover(parent1, parent2)
-
-		// Mutation
-		child = t.mutateModel(child)
-		child.Generation = t.Generation + 1
-
-		newModels[i] = child
-	}
-
-	t.Models = newModels
-}
-
-// tournamentSelect selects a model using tournament selection
-func (t *GPUTrainer) tournamentSelect(tournamentSize int) EvaluationModel {
-	best := t.Models[0]
-	bestFitness := t.Models[0].Fitness
-
-	for i := 1; i < tournamentSize; i++ {
-		idx := i % len(t.Models) // Ensure we don't go out of bounds
-		if t.Models[idx].Fitness > bestFitness {
-			best = t.Models[idx]
-			bestFitness = t.Models[idx].Fitness
-		}
-	}
-
-	return best
-}
-
-// crossover combines two models to create a child model
-func (t *GPUTrainer) crossover(parent1, parent2 EvaluationModel) EvaluationModel {
-	child := EvaluationModel{
-		Coeffs: evaluation.EvaluationCoefficients{
-			MaterialCoeffs:  make([]int, 3),
-			MobilityCoeffs:  make([]int, 3),
-			CornersCoeffs:   make([]int, 3),
-			ParityCoeffs:    make([]int, 3),
-			StabilityCoeffs: make([]int, 3),
-			FrontierCoeffs:  make([]int, 3),
-		},
-	}
-
-	// Crossover each coefficient with 50% chance from each parent
-	for i := 0; i < 3; i++ {
-		// Material coefficients
-		if i%2 == 0 {
-			child.Coeffs.MaterialCoeffs[i] = parent1.Coeffs.MaterialCoeffs[i]
-		} else {
-			child.Coeffs.MaterialCoeffs[i] = parent2.Coeffs.MaterialCoeffs[i]
-		}
-
-		// Mobility coefficients
-		if (i+1)%2 == 0 {
-			child.Coeffs.MobilityCoeffs[i] = parent1.Coeffs.MobilityCoeffs[i]
-		} else {
-			child.Coeffs.MobilityCoeffs[i] = parent2.Coeffs.MobilityCoeffs[i]
-		}
-
-		// Corners coefficients
-		if i%2 == 0 {
-			child.Coeffs.CornersCoeffs[i] = parent1.Coeffs.CornersCoeffs[i]
-		} else {
-			child.Coeffs.CornersCoeffs[i] = parent2.Coeffs.CornersCoeffs[i]
-		}
-
-		// Parity coefficients
-		if (i+1)%2 == 0 {
-			child.Coeffs.ParityCoeffs[i] = parent1.Coeffs.ParityCoeffs[i]
-		} else {
-			child.Coeffs.ParityCoeffs[i] = parent2.Coeffs.ParityCoeffs[i]
-		}
-
-		// Stability coefficients
-		if i%3 == 0 {
-			child.Coeffs.StabilityCoeffs[i] = parent1.Coeffs.StabilityCoeffs[i]
-		} else {
-			child.Coeffs.StabilityCoeffs[i] = parent2.Coeffs.StabilityCoeffs[i]
-		}
-
-		// Frontier coefficients
-		if (i+2)%3 == 0 {
-			child.Coeffs.FrontierCoeffs[i] = parent1.Coeffs.FrontierCoeffs[i]
-		} else {
-			child.Coeffs.FrontierCoeffs[i] = parent2.Coeffs.FrontierCoeffs[i]
-		}
-	}
-
-	return child
-}
-
-// mutateModel applies random mutations to a model
-func (t *GPUTrainer) mutateModel(model EvaluationModel) EvaluationModel {
-	mutated := model
-
-	// Mutate each coefficient with probability = mutation rate
-	for i := 0; i < 3; i++ {
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.MaterialCoeffs[i] = clampMutation(model.Coeffs.MaterialCoeffs[i], 100)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.MobilityCoeffs[i] = clampMutation(model.Coeffs.MobilityCoeffs[i], 50)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.CornersCoeffs[i] = clampMutation(model.Coeffs.CornersCoeffs[i], 200)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.ParityCoeffs[i] = clampMutation(model.Coeffs.ParityCoeffs[i], 100)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.StabilityCoeffs[i] = clampMutation(model.Coeffs.StabilityCoeffs[i], 50)
-		}
-		if rand.Float64() < t.MutationRate {
-			mutated.Coeffs.FrontierCoeffs[i] = clampMutation(model.Coeffs.FrontierCoeffs[i], 30)
-		}
-	}
-
-	return mutated
-}
-
-// sortModelsByFitness sorts models by fitness in descending order
-func (t *GPUTrainer) sortModelsByFitness() {
-	sort.Slice(t.Models, func(i, j int) bool {
-		return t.Models[i].Fitness > t.Models[j].Fitness
-	})
-}
-
-// SaveModel saves a model to a JSON file
-func (t *GPUTrainer) SaveModel(filename string, model EvaluationModel) error {
-	data, err := json.MarshalIndent(model, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filename, data, 0644)
-}
-
-// LoadModel loads a model from a JSON file
-func (t *GPUTrainer) LoadModel(filename string) (EvaluationModel, error) {
-	var model EvaluationModel
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return model, err
-	}
-	err = json.Unmarshal(data, &model)
-	return model, err
+	// Use the base implementation for simplicity and consistency
+	t.BaseTrainer.createNextGeneration()
 }
 
 // SaveGenerationStats overrides the base trainer's method to include GPU information
 func (t *GPUTrainer) SaveGenerationStats(gen int) error {
 	stats := struct {
-		Generation     int             `json:"generation"`
-		BestFitness    float64         `json:"best_fitness"`
-		AvgFitness     float64         `json:"avg_fitness"`
-		BestModel      EvaluationModel `json:"best_model"`
-		Timestamp      string          `json:"timestamp"`
-		UsingGPU       bool            `json:"using_gpu"`
+		Generation     int               `json:"generation"`
+		BestFitness    float64           `json:"best_fitness"`
+		AvgFitness     float64           `json:"avg_fitness"`
+		BestModel      EvaluationModel   `json:"best_model"`
+		AllModels      []EvaluationModel `json:"all_models"`
+		Timestamp      string            `json:"timestamp"`
+		UsingGPU       bool              `json:"using_gpu"`
+		GpuMemoryFree  uint64            `json:"gpu_memory_free"`
+		GpuMemoryTotal uint64            `json:"gpu_memory_total"`
 		PerformanceLog struct {
 			EvaluationTimeMs int `json:"evaluation_time_ms"`
 			TournamentTimeMs int `json:"tournament_time_ms"`
@@ -478,18 +212,35 @@ func (t *GPUTrainer) SaveGenerationStats(gen int) error {
 			MutationTimeMs   int `json:"mutation_time_ms"`
 			TotalTimeMs      int `json:"total_time_ms"`
 		} `json:"performance"`
+		Stats       map[string]int    `json:"stats_counts"`
+		TimingStats map[string]string `json:"timing_stats"`
+		Wins        []int             `json:"wins"`
+		Losses      []int             `json:"losses"`
+		Draws       []int             `json:"draws"`
+		Fitness     []float64         `json:"fitness"`
 	}{
 		Generation:  gen,
 		BestFitness: t.Models[0].Fitness,
 		BestModel:   t.Models[0],
+		AllModels:   t.Models,
 		Timestamp:   time.Now().Format(time.RFC3339),
 		UsingGPU:    t.UseGPU,
+		Stats:       t.Stats.Counts,
 	}
 
 	// Calculate average fitness
 	var sum float64
-	for _, model := range t.Models {
+	stats.Wins = make([]int, len(t.Models))
+	stats.Losses = make([]int, len(t.Models))
+	stats.Draws = make([]int, len(t.Models))
+	stats.Fitness = make([]float64, len(t.Models))
+
+	for i, model := range t.Models {
 		sum += model.Fitness
+		stats.Wins[i] = model.Wins
+		stats.Losses[i] = model.Losses
+		stats.Draws[i] = model.Draws
+		stats.Fitness[i] = model.Fitness
 	}
 	stats.AvgFitness = sum / float64(len(t.Models))
 
@@ -499,6 +250,12 @@ func (t *GPUTrainer) SaveGenerationStats(gen int) error {
 	stats.PerformanceLog.CrossoverTimeMs = int(t.Stats.CrossoverTime.Milliseconds())
 	stats.PerformanceLog.MutationTimeMs = int(t.Stats.MutationTime.Milliseconds())
 	stats.PerformanceLog.TotalTimeMs = int(t.Stats.TotalGenerationTime.Milliseconds())
+
+	// Add detailed timing stats
+	stats.TimingStats = make(map[string]string)
+	for opName, duration := range t.Stats.OpTimes {
+		stats.TimingStats[opName] = duration.String()
+	}
 
 	// Save to file using the base trainer's helper methods
 	return t.BaseTrainer.SaveModelToFile(fmt.Sprintf("stats_gen_%d.json", gen), stats)
@@ -516,8 +273,6 @@ func (t *GPUTrainer) TournamentTraining(generations int) {
 		genStartTime := time.Now()
 
 		t.Generation = gen
-		fmt.Printf("\nGeneration %d/%d using %s\n", gen, generations,
-			map[bool]string{true: "GPU acceleration", false: "CPU only"}[t.UseGPU])
 
 		// Evaluate all models using tournament
 		tournamentStart := time.Now()
@@ -536,24 +291,24 @@ func (t *GPUTrainer) TournamentTraining(generations int) {
 		genTime := time.Since(genStartTime)
 		t.Stats.RecordOperation("generation", genTime)
 
-		// Print performance statistics every 5 generations
-		if gen%5 == 0 || gen == generations {
-			t.Stats.PrintSummary()
-		}
 	}
-
-	fmt.Println("\nTournament training completed!")
 }
 
 // EvaluateWithTournament evaluates models using tournament play
 func (t *GPUTrainer) EvaluateWithTournament() {
-	fmt.Println("Evaluating models using tournament system...")
+	fmt.Printf("\nRunning tournament for generation %d\n", t.Generation)
+
+	// Create progress bar description
+	progressDesc := fmt.Sprintf("Tournament Gen %d", t.Generation)
 
 	// Create a tournament
 	tournament := NewTournament(t.Models, t.NumGames/2, t.MaxDepth, true)
 
 	// Configure GPU usage for tournament
 	tournament.UseGPU = t.UseGPU
+
+	// Set the progress bar description
+	tournament.ProgressDescription = progressDesc
 
 	// Run the tournament
 	tournament.RunTournament()
@@ -582,12 +337,7 @@ func (t *GPUTrainer) EvaluateWithTournament() {
 	bestIdx, bestModel := tournament.GetBestModel()
 	if bestIdx != -1 && bestModel != nil && bestModel.Fitness > t.BestModel.Fitness {
 		t.BestModel = *bestModel
-		fmt.Printf("New best model from tournament: fitness %.2f, win rate %.2f%%\n",
-			t.BestModel.Fitness,
-			float64(t.BestModel.Wins)/float64(t.BestModel.Wins+t.BestModel.Losses+t.BestModel.Draws)*100)
 		t.SaveModel("best_model.json", t.BestModel)
-	} else if bestIdx == len(t.Models) {
-		fmt.Println("Standard AI won the tournament!")
 	}
 }
 

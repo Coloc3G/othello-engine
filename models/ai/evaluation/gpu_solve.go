@@ -1,4 +1,4 @@
-package learning
+package evaluation
 
 // #cgo windows LDFLAGS: -L${SRCDIR}/../../../cuda -lcuda_othello
 // #cgo linux LDFLAGS: -L${SRCDIR}/../../../cuda -lcuda_othello
@@ -23,8 +23,11 @@ var (
 func GPUSolveWithStats(g game.Game, player game.Player, depth int, perfStats *stats.PerformanceStats) (game.Position, bool) {
 	totalStart := time.Now()
 
-	// Record cache miss
-	perfStats.RecordOperation("cache_miss", 0)
+	// Skip if GPU is not available or evaluation is not initialized
+	if !IsGPUAvailable() {
+		perfStats.RecordOperation("gpu_unavailable", 0)
+		return game.Position{Row: -1, Col: -1}, false
+	}
 
 	// Only attempt GPU solve if there are valid moves
 	validMoves := game.ValidMoves(g.Board, player.Color)

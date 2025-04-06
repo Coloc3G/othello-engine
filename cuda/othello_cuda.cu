@@ -46,21 +46,9 @@ typedef struct
   int best_move_col;
 } TranspositionEntry;
 
-// Position cache for batching
-typedef struct
-{
-  GameState states[MAX_POSITIONS_POOL];
-  int scores[MAX_POSITIONS_POOL];
-  unsigned long long hashes[MAX_POSITIONS_POOL];
-  int cache_size;
-} PositionCache;
-
 // Global device variables
 __constant__ EvaluationCoefficients d_coeffs;
 __device__ unsigned long long d_zobrist_table[3][BOARD_SIZE][BOARD_SIZE];
-__device__ TranspositionEntry d_tt[MAX_ZOBRIST_ENTRIES];
-__device__ int d_tt_size = 0;
-__device__ PositionCache d_position_cache;
 
 // Host-side copies
 EvaluationCoefficients h_coeffs;
@@ -107,46 +95,6 @@ unsigned long long computeZobristHashHost(int board[BOARD_SIZE][BOARD_SIZE], int
   }
 
   return hash;
-}
-
-//-----------------------------------------------------------------------
-// Transposition table utilities
-//-----------------------------------------------------------------------
-
-// Store entry in transposition table (device)
-__device__ void storeTranspositionEntry(unsigned long long key, int score,
-                                        int depth, int best_move_row, int best_move_col)
-{
-  // Use key as index with modulo to handle collisions
-  int index = key % MAX_ZOBRIST_ENTRIES;
-
-  // Always replace for now (could implement more sophisticated replacement policy)
-  d_tt[index].key = key;
-  d_tt[index].score = score;
-  d_tt[index].depth = depth;
-  d_tt[index].best_move_row = best_move_row;
-  d_tt[index].best_move_col = best_move_col;
-
-  // Atomic increment to track table size
-  atomicMin(&d_tt_size, MAX_ZOBRIST_ENTRIES);
-}
-
-// Lookup entry in transposition table (device)
-__device__ bool lookupTranspositionEntry(unsigned long long key, int depth,
-                                         int *score, int *best_move_row, int *best_move_col)
-{
-  int index = key % MAX_ZOBRIST_ENTRIES;
-
-  // Check if we have a valid entry with sufficient depth
-  if (d_tt[index].key == key && d_tt[index].depth >= depth)
-  {
-    *score = d_tt[index].score;
-    *best_move_row = d_tt[index].best_move_row;
-    *best_move_col = d_tt[index].best_move_col;
-    return true;
-  }
-
-  return false;
 }
 
 //-----------------------------------------------------------------------
@@ -1022,4 +970,50 @@ __declspec(dllexport) void getGPUMemoryInfo(unsigned long long *free_memory, uns
 __declspec(dllexport) void cleanupCUDA()
 {
   cudaDeviceReset();
+}
+
+// Evaluate and find best moves for multiple positions in parallel
+__declspec(dllexport) void evaluateAndFindBestMoves(int *boards, int *player_colors, int *depths,
+                                                    int *scores, int *best_rows, int *best_cols, int num_states)
+{
+  // Measure transfer and execution time for profiling
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+
+  cudaEventRecord(start);
+
+  // Process each position sequentially
+  // In a more optimized implementation, this would be done in parallel on the GPU
+  for (int i = 0; i < num_states; i++)
+  {
+    // Extract the current board
+    int *current_board = &boards[i * 64];
+    int player_color = player_colors[i];
+    int depth = depths[i];
+
+    // Find best move for this position
+    int row = -1, col = -1;
+    int score = findBestMove(current_board, player_color, depth, &row, &col);
+
+    // Store results
+    scores[i] = score;
+    best_rows[i] = row;
+    best_cols[i] = col;
+  }
+
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+
+  float milliseconds = 0;
+  cudaEventElapsedTime(&milliseconds, start, stop);
+
+  if (num_states > 10)
+  {
+    printf("GPU processed %d minimax positions in %.2f ms (%.2f positions/ms)\n",
+           num_states, milliseconds, num_states / milliseconds);
+  }
+
+  cudaEventDestroy(start);
+  cudaEventDestroy(stop);
 }

@@ -3,7 +3,6 @@ package evaluation
 import (
 	"time"
 
-	"github.com/Coloc3G/othello-engine/models/ai/cache"
 	"github.com/Coloc3G/othello-engine/models/ai/stats"
 	"github.com/Coloc3G/othello-engine/models/game"
 )
@@ -12,45 +11,11 @@ import (
 func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation, perfStats *stats.PerformanceStats) game.Position {
 	startTime := time.Now()
 
-	// Get the evaluation cache
-	boardCache := cache.GetGlobalCache()
-
-	// Try to find a cached result for this board
-	_, cachedMove, source, found := boardCache.Lookup(g.Board, player.Color, depth)
-	if found && cachedMove.Row >= 0 && cachedMove.Row < 8 && cachedMove.Col >= 0 && cachedMove.Col < 8 {
-		// Verify that the cached move is still valid
-		if game.IsValidMove(g.Board, player.Color, cachedMove) {
-			// Record cache hit performance
-			if perfStats != nil {
-				cacheHitTime := time.Since(startTime)
-				perfStats.RecordOperation("cache_hit", cacheHitTime)
-
-				// Record source of the cache hit
-				if source == cache.SourceCPU {
-					perfStats.RecordOperation("cpu_cache_hit", 0)
-				} else if source == cache.SourceGPU {
-					perfStats.RecordOperation("gpu_cache_hit", 0)
-				}
-			}
-
-			return cachedMove
-		}
-	}
-
-	// Log cache miss if stats available
-	if perfStats != nil {
-		perfStats.RecordOperation("cache_miss", 0)
-	}
-
-	// No valid cache hit, compute the best move
+	// No cache lookup - directly compute the best move
 	bestScore := -1 << 31
 	var bestMove game.Position
 
 	// Track which source actually computed this evaluation
-	var evaluationSource cache.CacheSource = cache.SourceCPU // Default to CPU
-
-	// Check if we're using a GPU evaluation
-	gpuEval, isGPUEval := eval.(*GPUMixedEvaluation)
 	cpuEvalTime := time.Duration(0)
 
 	validMoves := game.ValidMoves(g.Board, player.Color)
@@ -60,7 +25,7 @@ func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation,
 		var childScore int
 
 		// Use GPU or CPU evaluation as appropriate
-		if isGPUEval && IsGPUAvailable() {
+		if gpuEval, isGPUEval := eval.(*GPUMixedEvaluation); isGPUEval && IsGPUAvailable() {
 			// Try GPU evaluation first
 			gpuStartTime := time.Now()
 
@@ -70,7 +35,6 @@ func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation,
 			if len(scores) > 0 {
 				// GPU evaluation succeeded
 				childScore = scores[0]
-				evaluationSource = cache.SourceGPU
 
 				// Log GPU performance if stats available
 				if perfStats != nil {
@@ -82,7 +46,6 @@ func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation,
 				// GPU evaluation failed, fall back to CPU
 				fallbackStartTime := time.Now()
 				childScore = MMAB(g, newBoard, player, depth-1, false, -1<<31, 1<<31-1, gpuEval, perfStats)
-				evaluationSource = cache.SourceCPU
 
 				// Log fallback performance if stats available
 				if perfStats != nil {
@@ -111,16 +74,13 @@ func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation,
 		}
 	}
 
-	// Cache the result with the correct source
-	boardCache.Store(g.Board, player.Color, depth, bestScore, bestMove, evaluationSource)
-
 	// Log total solve time if stats available
 	if perfStats != nil {
 		totalTime := time.Since(startTime)
 		perfStats.RecordOperation("solve_total", totalTime)
 
 		// Record which was dominant in this evaluation
-		if isGPUEval && cpuEvalTime < totalTime/2 {
+		if _, isGPUEval := eval.(*GPUMixedEvaluation); isGPUEval && cpuEvalTime < totalTime/2 {
 			perfStats.RecordOperation("solve_gpu_dominant", 0)
 		} else {
 			perfStats.RecordOperation("solve_cpu_dominant", 0)
@@ -133,19 +93,6 @@ func SolveWithStats(g game.Game, player game.Player, depth int, eval Evaluation,
 // Solve finds the best move for a player using minimax with alpha-beta pruning
 func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Position {
 	// This is a simpler version without performance tracking
-	// Get the evaluation cache
-	boardCache := cache.GetGlobalCache()
-
-	// Try to find a cached result for this board
-	_, cachedMove, _, found := boardCache.Lookup(g.Board, player.Color, depth)
-	if found && cachedMove.Row >= 0 && cachedMove.Row < 8 && cachedMove.Col >= 0 && cachedMove.Col < 8 {
-		// Verify that the cached move is still valid
-		if game.IsValidMove(g.Board, player.Color, cachedMove) {
-			return cachedMove
-		}
-	}
-
-	// No valid cache hit, compute the best move
 	bestScore := -1 << 31
 	var bestMove game.Position
 
@@ -159,36 +106,11 @@ func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Pos
 		}
 	}
 
-	// Cache the result
-	boardCache.Store(g.Board, player.Color, depth, bestScore, bestMove, cache.SourceCPU)
-
 	return bestMove
 }
 
 // MMAB performs minimax search with alpha-beta pruning
 func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool, alpha, beta int, eval Evaluation, perfStats *stats.PerformanceStats) int {
-	// Get the evaluation cache
-	boardCache := cache.GetGlobalCache()
-
-	// Check if position is already cached with sufficient depth
-	score, _, source, found := boardCache.Lookup(node, player.Color, depth)
-	if found {
-		// Track cache hits if stats available
-		if perfStats != nil {
-			if source == cache.SourceCPU {
-				perfStats.RecordOperation("cpu_cache_hit", 0)
-			} else if source == cache.SourceGPU {
-				perfStats.RecordOperation("gpu_cache_hit", 0)
-			}
-		}
-		return score
-	}
-
-	// Track cache misses if stats available
-	if perfStats != nil {
-		perfStats.RecordOperation("cache_miss", 0)
-	}
-
 	// Base case: leaf node or terminal position
 	if depth == 0 || game.IsGameFinished(node) {
 		// Evaluate position
@@ -209,15 +131,13 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 		return score
 	}
 
+	var score int
+
 	// If no valid moves, pass turn
 	oplayer := game.GetOtherPlayer(g.Players, player.Color)
 	if (max && !game.HasAnyMoves(node, player.Color)) || (!max && !game.HasAnyMoves(node, oplayer.Color)) {
 		return MMAB(g, node, player, depth-1, !max, alpha, beta, eval, perfStats)
 	}
-
-	var bestMove game.Position
-	// Track which source actually computed this evaluation
-	var evaluationSource cache.CacheSource = cache.SourceCPU
 
 	if max {
 		score = -1 << 31
@@ -226,7 +146,6 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 			childScore := MMAB(g, newNode, player, depth-1, false, alpha, beta, eval, perfStats)
 			if childScore > score {
 				score = childScore
-				bestMove = move
 			}
 			if score > alpha {
 				alpha = score
@@ -242,7 +161,6 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 			childScore := MMAB(g, newNode, player, depth-1, true, alpha, beta, eval, perfStats)
 			if childScore < score {
 				score = childScore
-				bestMove = move
 			}
 			if score < beta {
 				beta = score
@@ -252,14 +170,6 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 			}
 		}
 	}
-
-	// Check if this was evaluated with GPU
-	if _, isGPUEval := eval.(*GPUMixedEvaluation); isGPUEval && IsGPUAvailable() {
-		evaluationSource = cache.SourceGPU
-	}
-
-	// Cache the result
-	boardCache.Store(node, player.Color, depth, score, bestMove, evaluationSource)
 
 	return score
 }

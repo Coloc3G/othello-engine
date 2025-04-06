@@ -77,18 +77,19 @@ func (t *Trainer) StartTraining(generations int) {
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
 
-		// Create next generation
+		// NEW: If after 3 or more generations no model has any wins, reinforce population aggressively
+		if gen >= 3 && calculateAverageWins(t.Models) == 0 {
+			fmt.Println("No wins detected over recent generations. Reinforcing population!")
+			t.reinforcePopulation()
+		}
+
+		// Create next generation if not last generation
 		if gen < generations {
 			t.createNextGeneration()
 		}
 
 		genTime := time.Since(genStartTime)
 		t.Stats.RecordOperation("generation", genTime)
-
-		// Print performance statistics every 5 generations
-		if gen%5 == 0 || gen == generations {
-			t.Stats.PrintSummary()
-		}
 	}
 
 	fmt.Println("\nTraining completed!")
@@ -142,10 +143,6 @@ func (t *Trainer) TournamentTraining(generations int) {
 		genTime := time.Since(genStartTime)
 		t.Stats.RecordOperation("generation", genTime)
 
-		// Print performance statistics every 5 generations
-		if gen%5 == 0 || gen == generations {
-			t.Stats.PrintSummary()
-		}
 	}
 
 	fmt.Println("\nTournament training completed!")
@@ -153,7 +150,6 @@ func (t *Trainer) TournamentTraining(generations int) {
 
 // EvaluateWithTournament evaluates models using tournament play instead of individual games
 func (t *Trainer) EvaluateWithTournament() {
-	fmt.Println("Evaluating models using tournament system...")
 
 	// Create a tournament with all models plus standard AI
 	tournament := NewTournament(t.Models, t.NumGames/2, t.MaxDepth, true)
@@ -192,4 +188,24 @@ func (t *Trainer) EvaluateWithTournament() {
 	} else if bestIdx == len(t.Models) {
 		fmt.Println("Standard AI won the tournament!")
 	}
+}
+
+func (t *Trainer) reinforcePopulation() {
+	// For all models, apply a heavy mutation to force exploration.
+	for i := range t.Models {
+		t.Models[i].Coeffs.MaterialCoeffs = heavyMutate(t.Models[i].Coeffs.MaterialCoeffs)
+		t.Models[i].Coeffs.MobilityCoeffs = heavyMutate(t.Models[i].Coeffs.MobilityCoeffs)
+		t.Models[i].Coeffs.CornersCoeffs = heavyMutate(t.Models[i].Coeffs.CornersCoeffs)
+		t.Models[i].Coeffs.ParityCoeffs = heavyMutate(t.Models[i].Coeffs.ParityCoeffs)
+		t.Models[i].Coeffs.StabilityCoeffs = heavyMutate(t.Models[i].Coeffs.StabilityCoeffs)
+		t.Models[i].Coeffs.FrontierCoeffs = heavyMutate(t.Models[i].Coeffs.FrontierCoeffs)
+	}
+}
+
+func calculateAverageWins(models []EvaluationModel) int {
+	total := 0
+	for _, m := range models {
+		total += m.Wins
+	}
+	return total / len(models)
 }

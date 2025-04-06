@@ -1,4 +1,4 @@
-package test
+package main
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/Coloc3G/othello-engine/models/opening"
+	"github.com/schollz/progressbar/v3"
 )
 
 // ComparisonStats holds statistics for AI version comparisons
@@ -35,6 +36,21 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 	// Create two evaluation functions with different coefficients
 	eval1 := evaluation.NewMixedEvaluationWithCoefficients(coeff1)
 	eval2 := evaluation.NewMixedEvaluationWithCoefficients(coeff2)
+
+	// Create progress bar
+	bar := progressbar.NewOptions(numGames,
+		progressbar.OptionSetDescription("Playing tournament games"),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionShowCount(),
+		progressbar.OptionShowIts(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
 
 	// Play games between the two AIs
 	for i := 0; i < numGames; i++ {
@@ -122,7 +138,10 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 			}
 		}
 
-		// Print progress
+		// Update progress bar
+		bar.Add(1)
+
+		// Print progress (we'll keep this as a backup but the progress bar handles it)
 		if (i+1)%100 == 0 || i == numGames-1 {
 			fmt.Printf("Progress: %d/%d games completed\n", i+1, numGames)
 		}

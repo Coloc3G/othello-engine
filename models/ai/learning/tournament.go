@@ -24,14 +24,15 @@ type TournamentResult struct {
 
 // Tournament manages tournament play between AI models
 type Tournament struct {
-	Models      []EvaluationModel
-	Results     []TournamentResult
-	NumGames    int // Number of games per match
-	MaxDepth    int // Search depth for AI
-	StandardAI  *evaluation.MixedEvaluation
-	UseStandard bool              // Whether to include standard AI in tournament
-	UseGPU      bool              // Whether to use GPU acceleration
-	Stats       *PerformanceStats // Performance statistics
+	Models              []EvaluationModel
+	Results             []TournamentResult
+	NumGames            int // Number of games per match
+	MaxDepth            int // Search depth for AI
+	StandardAI          *evaluation.MixedEvaluation
+	UseStandard         bool              // Whether to include standard AI in tournament
+	UseGPU              bool              // Whether to use GPU acceleration
+	Stats               *PerformanceStats // Performance statistics
+	ProgressDescription string            // Description for progress bar
 }
 
 // NewTournament creates a new tournament with specified parameters
@@ -82,12 +83,16 @@ func (t *Tournament) RunTournament() {
 	totalMatches := numCompetitors * (numCompetitors - 1) / 2
 	totalGames := totalMatches * t.NumGames
 
-	fmt.Printf("Tournament starting - %d competitors, %d total games\n", numCompetitors, totalGames)
+	// Use custom description if provided, otherwise use default
+	barDescription := "Tournament progress"
+	if t.ProgressDescription != "" {
+		barDescription = t.ProgressDescription
+	}
 
 	// Create progress bar
 	bar := progressbar.NewOptions(
 		totalGames,
-		progressbar.OptionSetDescription("Tournament progress"),
+		progressbar.OptionSetDescription(barDescription),
 		progressbar.OptionShowCount(),
 		progressbar.OptionShowIts(),
 		progressbar.OptionEnableColorCodes(true),
@@ -99,6 +104,7 @@ func (t *Tournament) RunTournament() {
 			BarEnd:        "]",
 		}),
 	)
+	bar.RenderBlank()
 
 	// Set up channels for progress tracking
 	type matchResult struct {
@@ -160,18 +166,11 @@ func (t *Tournament) RunTournament() {
 			// Update progress bar
 			gamesProcessed += result.gamesCount
 			bar.Set(gamesProcessed)
+			bar.RenderBlank()
 
 			// Update statistics
 			totalMatchTime += result.duration
 			matchesCompleted++
-
-			// Log statistics every 10 matches
-			if matchesCompleted%10 == 0 {
-				avgMatchTime := totalMatchTime / time.Duration(matchesCompleted)
-				fmt.Printf("\nAverage match time: %s (%d matches completed)\n",
-					avgMatchTime.Round(time.Millisecond), matchesCompleted)
-				bar.RenderBlank()
-			}
 		}
 
 		// Record stats

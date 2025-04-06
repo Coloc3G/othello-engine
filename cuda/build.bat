@@ -43,7 +43,7 @@ if exist cuda_othello.dll (
     echo Verifying DLL exports...
     where dumpbin >nul 2>&1
     if %ERRORLEVEL% EQU 0 (
-        dumpbin /EXPORTS cuda_othello.dll | findstr /i "initZobristTable hasValidMoves"
+        dumpbin /EXPORTS cuda_othello.dll | findstr /i "initZobristTable evaluateAndFindBestMoves"
         echo.
     )
     
@@ -52,12 +52,6 @@ if exist cuda_othello.dll (
     copy cuda_othello.dll ..\ /Y
     echo Copied DLL to parent directory
     
-    if not exist ..\models\ai\evaluation mkdir ..\models\ai\evaluation
-    if not exist ..\models\ai\learning mkdir ..\models\ai\learning
-    
-    copy cuda_othello.dll ..\models\ai\evaluation\ /Y
-    copy cuda_othello.dll ..\models\ai\learning\ /Y
-    echo Copied DLL to relevant module directories
 ) else (
     echo Build failed
     exit /b 1

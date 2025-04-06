@@ -13,8 +13,27 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+// Consolidated type for training position tracking
+type BatchPosition struct {
+	board       game.Board
+	player      game.Piece
+	modelIndex  int
+	openingIdx  int
+	playerIndex int
+}
+
 // PlayMatchWithOpening plays a match between a model and a standard AI using a specific opening
-func PlayMatchWithOpening(model EvaluationModel, modelEval, standardEval evaluation.Evaluation, op opening.Opening, playerIndex, maxDepth int) (win, loss, draw bool) {
+// This is the central match playing function used by both tournament and evaluation
+func PlayMatchWithOpening(
+	model EvaluationModel,
+	modelEval, standardEval evaluation.Evaluation,
+	op opening.Opening,
+	playerIndex, maxDepth int,
+	collectPositions bool,
+	modelIdx, openingIdx, playerPos int,
+	positions *[]BatchPosition,
+	mutex *sync.Mutex) (win, loss, draw bool) {
+
 	// Create a new game
 	g := game.NewGame("Model", "Standard")
 
@@ -39,9 +58,22 @@ func PlayMatchWithOpening(model EvaluationModel, modelEval, standardEval evaluat
 			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
 				var pos game.Position
 
-				// Try GPU solving if enabled
+				// If collecting positions for GPU batch processing
+				if collectPositions && useGPU && mutex != nil {
+					mutex.Lock()
+					*positions = append(*positions, BatchPosition{
+						board:       g.Board,
+						player:      g.CurrentPlayer.Color,
+						modelIndex:  modelIdx,
+						openingIdx:  openingIdx,
+						playerIndex: playerPos,
+					})
+					mutex.Unlock()
+				}
+
+				// Get the move based on evaluation type
 				if useGPU {
-					gpuPos, success := GPUSolve(*g, g.CurrentPlayer, maxDepth)
+					gpuPos, success := evaluation.GPUSolve(*g, g.CurrentPlayer, maxDepth)
 					if success {
 						pos = gpuPos
 					} else {
@@ -127,21 +159,6 @@ func applyOpening(g *game.Game, op opening.Opening) {
 	}
 }
 
-// clampMutation ensures mutation stays within reasonable limits
-func clampMutation(value, maxChange int) int {
-	// Ensure the value doesn't become negative or extremely large
-	change := maxChange / 2
-	mutation := value + (value / 4) - change
-
-	if mutation < 0 {
-		mutation = 1 // Ensure positive value
-	} else if mutation > maxChange*10 {
-		mutation = maxChange * 10 // Cap the maximum value
-	}
-
-	return mutation
-}
-
 // crossoverCoefficients performs crossover on a specific coefficient array
 func crossoverCoefficients(parent1, parent2 []int, pattern []bool) []int {
 	result := make([]int, len(parent1))
@@ -186,9 +203,6 @@ func evaluateModelsInParallel(
 	// Calculate total number of matches to play (all models * selected openings * 2 player positions)
 	totalMatches := len(models) * openingCount * 2
 
-	fmt.Printf("Evaluating %d models - playing %d matches total (%d openings)\n",
-		len(models), totalMatches, openingCount)
-
 	// Create a single progress bar for all matches
 	bar := createProgressBar(totalMatches, "Evaluating models")
 	bar.RenderBlank()
@@ -196,10 +210,21 @@ func evaluateModelsInParallel(
 	// Standard evaluation for opponent
 	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
 
+	// Prepare batch structures for GPU evaluation
+	var positions []BatchPosition
+	collectPositions := false
+
+	// Check if we're using GPU
+	if _, ok := createEvalFunc(*models[0]).(*evaluation.GPUMixedEvaluation); ok && evaluation.IsGPUAvailable() {
+		collectPositions = true
+		// Pre-allocate space for collecting positions
+		positions = make([]BatchPosition, 0, totalMatches*30) // Estimate average positions per game
+	}
+
 	// Launch goroutines for each model
 	for i := range models {
 		wg.Add(1)
-		go func(model *EvaluationModel) {
+		go func(modelIdx int, model *EvaluationModel) {
 			defer wg.Done()
 
 			// Create a thread-local copy of performance stats for this goroutine
@@ -220,12 +245,14 @@ func evaluateModelsInParallel(
 			localStats.Counts["eval_created"] = 1
 
 			// Play games against standard AI with selected openings
-			for _, op := range selectedOpenings {
+			for openingIdx, op := range selectedOpenings {
 				for playerIdx := range 2 {
 					startMatch := time.Now()
 
 					// Play the match
-					win, loss, draw := PlayMatchWithOpening(*model, evalFunc, standardEval, op, playerIdx, maxDepth)
+					win, loss, draw := PlayMatchWithOpening(
+						*model, evalFunc, standardEval, op, playerIdx, maxDepth,
+						collectPositions, modelIdx, openingIdx, playerIdx, &positions, &mutex)
 
 					// Record game result
 					if win {
@@ -260,7 +287,7 @@ func evaluateModelsInParallel(
 				stats.Counts["matches_played"] += totalMatches / len(models)
 				mutex.Unlock()
 			}
-		}(models[i])
+		}(i, models[i])
 	}
 
 	wg.Wait()

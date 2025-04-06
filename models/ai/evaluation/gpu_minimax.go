@@ -12,7 +12,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/Coloc3G/othello-engine/models/ai/cache"
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
@@ -73,16 +72,6 @@ func GPUMinimaxSolve(g game.Game, player game.Player, depth int) (game.Position,
 		return game.Position{}, 0, false
 	}
 
-	// Get the evaluation cache
-	boardCache := cache.GetGlobalCache()
-
-	// Check if the position is already cached
-	score, bestMove, _, found := boardCache.Lookup(g.Board, player.Color, depth)
-	if found && bestMove.Row >= 0 && bestMove.Col < 8 {
-		// Valid cache hit - count as success
-		return bestMove, score, true
-	}
-
 	// First try direct GPU solve with FindBestMoveCUDA
 	transferStart := time.Now()
 	bestMove, success := FindBestMoveCUDA(g.Board, player.Color, depth)
@@ -95,10 +84,7 @@ func GPUMinimaxSolve(g game.Game, player game.Player, depth int) (game.Position,
 		computeTime := time.Since(computeStart)
 
 		if len(scores) > 0 {
-			score = scores[0]
-			// Cache the result
-			boardCache.Store(g.Board, player.Color, depth, score, bestMove, cache.SourceGPU)
-
+			score := scores[0]
 			// Record performance
 			recordPerformance(true, transferTime, computeTime)
 
@@ -195,11 +181,6 @@ func processBatchMinimax() {
 				gpuMinimaxBatchResults[i].score = scores[0]
 				gpuMinimaxBatchResults[i].bestMove = bestMove
 				gpuMinimaxBatchResults[i].completed = true
-
-				// Cache result
-				boardCache := cache.GetGlobalCache()
-				boardCache.Store(boardsCopy[i], playersCopy[i], depthsCopy[i],
-					scores[0], bestMove, cache.SourceGPU)
 			}
 		}
 	}
