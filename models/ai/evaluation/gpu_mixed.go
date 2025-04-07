@@ -140,12 +140,12 @@ func (e *GPUMixedEvaluation) evaluateCPU(g game.Game, b game.Board, player game.
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.computeCoefficients(b)
 
 	// Use the raw evaluation functions that match the CUDA implementation
-	materialScore := e.MaterialEvaluation.rawEvaluate(b, player)
-	mobilityScore := e.MobilityEvaluation.rawEvaluate(b, player)
-	cornersScore := e.CornersEvaluation.rawEvaluate(b, player)
+	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
+	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
+	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
 	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
 	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.rawEvaluate(b, player)
+	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
 
 	// Calculate final score using same formula as CUDA
 	score := materialCoeff*materialScore +

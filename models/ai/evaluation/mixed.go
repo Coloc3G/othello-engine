@@ -97,17 +97,15 @@ func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEva
 	}
 }
 
-// Evaluate implements the Evaluation interface for MixedEvaluation
+// Evaluate the given board state and return a score
 func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
-
-	// Get all raw evaluation scores without normalization to match CUDA implementation
-	materialScore := e.MaterialEvaluation.rawEvaluate(b, player)
-	mobilityScore := e.MobilityEvaluation.rawEvaluate(b, player)
-	cornersScore := e.CornersEvaluation.rawEvaluate(b, player)
+	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
+	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
+	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
 	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
 	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.rawEvaluate(b, player)
+	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
 
 	return materialCoeff*materialScore +
 		mobilityCoeff*mobilityScore +

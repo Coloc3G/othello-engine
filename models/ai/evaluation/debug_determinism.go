@@ -146,12 +146,12 @@ func CompareCPUGPUEvaluation(board game.Board, player game.Player) {
 	}
 
 	// Get raw scores
-	materialScore := cpuEval.MaterialEvaluation.rawEvaluate(board, player)
-	mobilityScore := cpuEval.MobilityEvaluation.rawEvaluate(board, player)
-	cornersScore := cpuEval.CornersEvaluation.rawEvaluate(board, player)
+	materialScore := cpuEval.MaterialEvaluation.Evaluate(g, board, player)
+	mobilityScore := cpuEval.MobilityEvaluation.Evaluate(g, board, player)
+	cornersScore := cpuEval.CornersEvaluation.Evaluate(g, board, player)
 	parityScore := cpuEval.ParityEvaluation.Evaluate(g, board, player)
 	stabilityScore := cpuEval.StabilityEvaluation.Evaluate(g, board, player)
-	frontierScore := cpuEval.FrontierEvaluation.rawEvaluate(board, player)
+	frontierScore := cpuEval.FrontierEvaluation.Evaluate(g, board, player)
 
 	// Get coefficients
 	materialCoeff := cpuEval.MaterialCoeff[phase]

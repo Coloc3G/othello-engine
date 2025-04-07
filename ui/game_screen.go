@@ -37,7 +37,9 @@ type GameScreen struct {
 	face            font.Face
 	evaluationValue int                         // Current evaluation value
 	evalHistory     []int                       // History of evaluations for visualization
-	evaluator       *evaluation.MixedEvaluation // Evaluation function
+	evaluator       *evaluation.MixedEvaluation // Evaluation function (for human vs AI)
+	evaluatorBlack  *evaluation.MixedEvaluation // Evaluation for AI vs AI (Black)
+	evaluatorWhite  *evaluation.MixedEvaluation // Evaluation for AI vs AI (White)
 	evalChan        chan int                    // Channel for receiving evaluation results
 	evaluating      bool                        // Flag to track if evaluation is in progress
 	currentDepth    int                         // Current evaluation depth
@@ -59,10 +61,12 @@ func NewGameScreen(ui *UI) *GameScreen {
 		face:            basicfont.Face7x13,
 		evalHistory:     make([]int, 0),
 		evaluator:       evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff),
+		evaluatorBlack:  evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff),
+		evaluatorWhite:  evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff),
 		evalChan:        make(chan int, 1),      // Buffered channel for evaluation results
 		depthUpdateChan: make(chan int, 1),      // Buffered channel for depth updates
 		evalCancelChan:  make(chan struct{}, 1), // Buffered channel for cancellation signal
-		maxDepth:        5,                      // Maximum evaluation depth
+		maxDepth:        5,
 	}
 }
 
@@ -73,60 +77,54 @@ func (s *GameScreen) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 // AddMoveToHistory adds a move to the history table
 func (s *GameScreen) AddMoveToHistory(pos game.Position, playerColor game.Piece, pass bool) {
+	// Create move record
 	moveRecord := MoveRecord{
 		Position: pos,
 		Pass:     pass,
 	}
-
-	// If it's a black move, create a new turn
+	// If it's a black move, start a new turn.
 	if playerColor == game.Black {
 		s.moveHistory = append(s.moveHistory, [2]MoveRecord{
 			moveRecord, // Black move
 			{Position: game.Position{Row: -1, Col: -1}}, // Placeholder for white move
 		})
 	} else {
-		// If it's a white move, update the last turn's white move
+		// If white move, and at least one turn exists, update last turn.
 		if len(s.moveHistory) > 0 {
 			lastIdx := len(s.moveHistory) - 1
 			s.moveHistory[lastIdx][1] = moveRecord
 		} else {
-			// This is an unusual case where white moves first
-			// Create a new entry with placeholder for black
+			// Unusual case: white moves first.
 			s.moveHistory = append(s.moveHistory, [2]MoveRecord{
 				{Position: game.Position{Row: -1, Col: -1}}, // Placeholder for black
-				moveRecord, // White move
+				moveRecord,
 			})
 		}
 	}
-
-	// Adjust scroll offset to show the latest moves only if we need to scroll
+	// Scroll offset adjustment.
 	if len(s.moveHistory) > s.maxVisibleMoves {
 		s.scrollOffset = len(s.moveHistory) - s.maxVisibleMoves
 	} else {
-		s.scrollOffset = 0 // No need to scroll when fewer moves than visible area
+		s.scrollOffset = 0
 	}
 }
 
 // Update updates the game state
 func (s *GameScreen) Update() error {
-	// Calculate board dimensions based on screen size
+	// Calculate board dimensions based on screen size.
 	screenWidth, screenHeight := ebiten.WindowSize()
-	s.boardSize = min(screenWidth-300, screenHeight-100) // Reduce board size to make room for history
+	s.boardSize = min(screenWidth-300, screenHeight-100)
 	s.cellSize = s.boardSize / 8
-	s.boardOffsetX = (screenWidth - s.boardSize - 250) / 2 // Shift board left to make room for eval bar and history
-	s.boardOffsetY = 80                                    // Leave space for header
+	s.boardOffsetX = (screenWidth - s.boardSize - 250) / 2
+	s.boardOffsetY = 80
 
-	// Handle mouse wheel for scrolling move history
+	// Scroll handling.
 	_, scrollY := ebiten.Wheel()
 	if scrollY != 0 {
-		// Check if mouse is over history panel
 		mouseX, _ := ebiten.CursorPosition()
 		historyPanelX := s.boardOffsetX + s.boardSize + 80
 		if mouseX >= historyPanelX {
-			// Scroll history
-			s.scrollOffset -= int(scrollY * 3) // Adjust scroll speed
-
-			// Clamp scrolling
+			s.scrollOffset -= int(scrollY * 3)
 			if s.scrollOffset < 0 {
 				s.scrollOffset = 0
 			}
@@ -137,103 +135,87 @@ func (s *GameScreen) Update() error {
 		}
 	}
 
-	// Check if game is over
+	// Check for game over.
 	if game.IsGameFinished(s.ui.game.Board) {
 		s.ui.EndGame()
 		return nil
 	}
 
-	// Check if current player has any valid moves
+	// If no valid moves, add a "Pass" and switch player.
 	if !s.ui.game.HasAnyMovesInGame() {
-		// No valid moves, add a "Pass" record to history
 		s.AddMoveToHistory(game.Position{Row: -1, Col: -1}, s.ui.game.CurrentPlayer.Color, true)
-
-		// Switch to the other player
 		s.ui.game.CurrentPlayer = s.ui.game.GetOtherPlayerMethod()
 		return nil
 	}
 
-	// Check for depth updates
+	// Process depth updates and evaluation results.
 	select {
 	case newDepth := <-s.depthUpdateChan:
 		s.currentDepth = newDepth
 	default:
-		// No depth update
+		// No update.
 	}
-
-	// Check for finished evaluations
 	select {
 	case evalResult := <-s.evalChan:
 		s.evaluationValue = evalResult
-		s.resultDepth = s.currentDepth // Store the depth of this evaluation result
+		s.resultDepth = s.currentDepth
 		s.evalHistory = append(s.evalHistory, evalResult)
-
-		// Cap history size to prevent memory issues
 		if len(s.evalHistory) > 100 {
 			s.evalHistory = s.evalHistory[len(s.evalHistory)-100:]
 		}
 	default:
-		// No evaluation result ready yet
+		// No evaluation result.
 	}
 
-	// Handle AI vs AI mode
+	// AI vs AI mode.
 	if s.ui.aivsAiMode {
-		currentTime := time.Now()
-		if currentTime.Sub(s.ui.aivsAiTimer) >= s.ui.aivsAiMoveDelay {
-			// Time to make another AI move
-			eval := s.evaluator
+		if time.Now().Sub(s.ui.aivsAiTimer) >= s.ui.aivsAiMoveDelay {
+			// Use evaluatorBlack for Black and evaluatorWhite for White
+			var eval evaluation.Evaluation
+			if s.ui.game.CurrentPlayer.Color == game.Black {
+				eval = s.evaluatorBlack
+			} else {
+				eval = s.evaluatorWhite
+			}
 			pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
-
-			// Apply move and update evaluation
 			if s.ui.game.ApplyMove(pos) {
-				s.lastMovePos = pos                                           // Update last move position
-				s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false) // Add to history
-				s.updateProgressiveEvaluation()                               // Update evaluation
-				s.ui.aivsAiTimer = currentTime                                // Reset timer for next move
+				s.lastMovePos = pos
+				s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false)
+				s.updateProgressiveEvaluation()
+				s.ui.aivsAiTimer = time.Now()
 			}
 		}
 		return nil
 	}
 
-	// Handle human vs AI mode
+	// Human vs AI mode.
 	if s.ui.game.CurrentPlayer.Name == "Human" {
-		// Handle mouse input
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
-
-			// Determine if click was within board bounds
 			if x >= s.boardOffsetX && x < s.boardOffsetX+s.boardSize &&
 				y >= s.boardOffsetY && y < s.boardOffsetY+s.boardSize {
-
-				// Calculate board position
 				boardX := (x - s.boardOffsetX) / s.cellSize
 				boardY := (y - s.boardOffsetY) / s.cellSize
-
 				pos := game.Position{Row: boardY, Col: boardX}
-
-				// Try to make the move
 				if s.ui.game.ApplyMove(pos) {
-					s.lastMovePos = pos                                           // Update last move position
-					s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false) // Add to history
-					s.updateProgressiveEvaluation()                               // Update evaluation
+					s.lastMovePos = pos
+					s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false)
+					s.updateProgressiveEvaluation()
 					s.lastMove = time.Now()
 				}
 			}
 		}
-	} else if s.ui.game.CurrentPlayer.Name != "Human" {
-		// Handle AI move
+	} else {
+		// AI move.
 		eval := s.evaluator
 		pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
-
-		// Apply move and update evaluation
 		if s.ui.game.ApplyMove(pos) {
-			s.lastMovePos = pos                                           // Update last move position
-			s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false) // Add to history
-			s.updateProgressiveEvaluation()                               // Update evaluation
+			s.lastMovePos = pos
+			s.AddMoveToHistory(pos, s.ui.game.CurrentPlayer.Color, false)
+			s.updateProgressiveEvaluation()
 			s.lastMove = time.Now()
 		}
 	}
-
 	return nil
 }
 
@@ -319,7 +301,6 @@ func (s *GameScreen) drawMoveHistory(screen *ebiten.Image) {
 	turnCol := "Turn"
 
 	colWidth := historyWidth / 3
-
 	// Draw header background
 	ebitenutil.DrawRect(screen, float64(historyX), float64(historyY),
 		float64(historyWidth), float64(24),
@@ -341,7 +322,6 @@ func (s *GameScreen) drawMoveHistory(screen *ebiten.Image) {
 		float64(historyX+colWidth), float64(historyY),
 		float64(historyX+colWidth), float64(historyY+historyHeight),
 		color.RGBA{100, 100, 100, 255})
-
 	ebitenutil.DrawLine(screen,
 		float64(historyX+2*colWidth), float64(historyY),
 		float64(historyX+2*colWidth), float64(historyY+historyHeight),
@@ -363,7 +343,6 @@ func (s *GameScreen) drawMoveHistory(screen *ebiten.Image) {
 		if i%2 == 1 {
 			rowColor = color.RGBA{45, 45, 45, 255}
 		}
-
 		ebitenutil.DrawRect(screen, float64(historyX), float64(rowY),
 			float64(historyWidth), float64(cellHeight),
 			rowColor)
@@ -449,7 +428,6 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 
 			// Determine cell color - check if this is the last move position
 			cellColor := color.RGBA{50, 150, 50, 255} // Default cell color
-
 			if s.lastMovePos.Row == row && s.lastMovePos.Col == col {
 				// Highlight the last move with a different color
 				cellColor = ColorLastMove
@@ -496,16 +474,14 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 	// Draw coordinate labels around the board
 	s.drawBoardCoordinates(screen)
 
-	// Draw last move indicator text
+	// Draw last move indicator
 	if s.lastMovePos.Row >= 0 && s.lastMovePos.Row < 8 &&
 		s.lastMovePos.Col >= 0 && s.lastMovePos.Col < 8 {
 		colLetter := string('A' + s.lastMovePos.Col)
 		rowNumber := s.lastMovePos.Row + 1
 		lastMoveText := fmt.Sprintf("Last move: %s%d", colLetter, rowNumber)
-
 		textX := s.boardOffsetX + s.boardSize + 80
 		textY := s.boardOffsetY + s.boardSize - 20
-
 		// Draw with a more visible color
 		text.Draw(screen, lastMoveText, s.face, textX, textY, ColorLastMove)
 	}
@@ -566,6 +542,16 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 	// Always evaluate from black's perspective for consistency
 	player := s.ui.game.Players[0]
 
+	// Select the appropriate evaluator based on the evaluation context
+	var eval evaluation.Evaluation
+	if s.ui.aivsAiMode {
+		// In AI vs AI mode, use the evaluator of the black player for visualization
+		eval = s.evaluatorBlack
+	} else {
+		// In Human vs AI mode, use the standard evaluator
+		eval = s.evaluator
+	}
+
 	// Create a new evaluation cycle
 	go func() {
 		defer func() { s.evaluating = false }()
@@ -596,7 +582,7 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 				true,    // maximizing
 				-1<<31,  // alpha
 				1<<31-1, // beta
-				s.evaluator,
+				eval,
 				nil) // Pass nil for performance stats since we don't track them in the UI
 
 			// Check again if we should cancel before sending result
@@ -659,7 +645,6 @@ func (s *GameScreen) drawEvaluationBar(screen *ebiten.Image) {
 
 	// Draw the evaluation fill
 	fillHeight := int(float64(barHeight/2) * normalizedEval)
-
 	var fillColor color.RGBA
 
 	if normalizedEval > 0 {

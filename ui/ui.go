@@ -3,6 +3,7 @@ package ui
 import (
 	"time"
 
+	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -125,6 +126,18 @@ func (s *UI) StartAIVsAIGame(ai1Version, ai2Version int) {
 		s.gameScreen.lastMovePos = game.Position{Row: -1, Col: -1}
 		s.gameScreen.moveHistory = make([][2]MoveRecord, 0)
 		s.gameScreen.scrollOffset = 0
+
+		// Set appropriate evaluators based on AI version
+		if ai1Version == 0 {
+			s.gameScreen.evaluatorBlack = evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
+		} else {
+			s.gameScreen.evaluatorBlack = evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
+		}
+		if ai2Version == 0 {
+			s.gameScreen.evaluatorWhite = evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
+		} else {
+			s.gameScreen.evaluatorWhite = evaluation.NewMixedEvaluationWithCoefficients(evaluation.V2Coeff)
+		}
 	}
 
 	s.currentScreen = s.gameScreen
