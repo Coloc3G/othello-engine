@@ -18,8 +18,8 @@ func main() {
 		fmt.Println("Othello Game")
 		fmt.Println("Launch the application with no arguments to start the UI")
 		fmt.Println("Additional functionality is available in the cmd directory:")
-		fmt.Println("  - For training: go run cmd/train/main.go")
-		fmt.Println("  - For visualization: go run cmd/visualization/main.go")
+		fmt.Println("  - For training: go run cmd/train")
+		fmt.Println("  - For visualization: go run cmd/visualization")
 		os.Exit(0)
 	}
 
