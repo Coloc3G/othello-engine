@@ -120,8 +120,6 @@ def update(game_id):
       if params[10].strip() != GAMES[game_id]:
           return
         
-      print(f"Time to play game {game_id} as {GAMES[game_id]}")
-        
       gameData = data[arrayStart+1:arrayEnd].replace('"', '').replace(",", "").strip()
       r.recvuntil(b">")
       r.sendline(gameData)
