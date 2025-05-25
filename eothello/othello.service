@@ -1,0 +1,13 @@
+[Unit]
+Description=Othello Engine Service
+After=network.target
+
+[Service]
+Type=simple
+User=axel
+WorkingDirectory=/opt/othello-engine
+ExecStart=/usr/bin/python eothello/play.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
