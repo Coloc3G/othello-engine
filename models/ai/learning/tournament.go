@@ -38,16 +38,10 @@ type Tournament struct {
 
 // NewTournament creates a new tournament with specified parameters
 func NewTournament(models []EvaluationModel, numGames, maxDepth int, useStandard bool) *Tournament {
-	// Check GPU availability
-	gpuAvailable := evaluation.IsGPUAvailable()
 
 	// Create standardAI with GPU if available
 	var standardAI evaluation.Evaluation
-	if gpuAvailable {
-		standardAI = evaluation.NewGPUMixedEvaluation(evaluation.V1Coeff)
-	} else {
-		standardAI = evaluation.NewMixedEvaluation()
-	}
+	standardAI = evaluation.NewMixedEvaluation()
 
 	return &Tournament{
 		Models:      models,
@@ -56,7 +50,6 @@ func NewTournament(models []EvaluationModel, numGames, maxDepth int, useStandard
 		MaxDepth:    maxDepth,
 		StandardAI:  standardAI,
 		UseStandard: useStandard,
-		UseGPU:      gpuAvailable,
 		Stats:       stats.NewPerformanceStats(),
 	}
 }
@@ -350,19 +343,7 @@ func (t *Tournament) playGame(blackEval, whiteEval evaluation.Evaluation) game.P
 		if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
 			moveStart := time.Now()
 
-			var pos game.Position
-			if t.UseGPU {
-				// Try GPU solve first for both players
-				gpuPos, success := evaluation.GPUSolve(*g, g.CurrentPlayer, t.MaxDepth)
-				if success {
-					pos = gpuPos
-				} else {
-					// Fall back to regular solve
-					pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
-				}
-			} else {
-				pos = evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
-			}
+			pos := evaluation.Solve(*g, g.CurrentPlayer, t.MaxDepth, evalFunc)
 
 			moveTime := time.Since(moveStart)
 
@@ -391,12 +372,6 @@ func (t *Tournament) playGame(blackEval, whiteEval evaluation.Evaluation) game.P
 
 // createEvaluationFromModel creates a custom evaluation from model coefficients
 func (t *Tournament) createEvaluationFromModel(model EvaluationModel) evaluation.Evaluation {
-	if t.UseGPU {
-		// Ensure GPU coefficients are set properly for this model
-		gpuEval := evaluation.NewGPUMixedEvaluation(model.Coeffs)
-		evaluation.SetCUDACoefficients(model.Coeffs)
-		return gpuEval
-	}
 	return evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 }
 

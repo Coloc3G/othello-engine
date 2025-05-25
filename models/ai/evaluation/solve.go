@@ -37,12 +37,7 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 		// Track evaluation time
 		if perfStats != nil {
 			evalTime := time.Since(evalStartTime)
-			_, isGPUEval := eval.(*GPUMixedEvaluation)
-			if isGPUEval && IsGPUAvailable() {
-				perfStats.RecordOperation("gpu_leaf_eval", evalTime)
-			} else {
-				perfStats.RecordOperation("cpu_leaf_eval", evalTime)
-			}
+			perfStats.RecordOperation("cpu_leaf_eval", evalTime)
 		}
 
 		return score
