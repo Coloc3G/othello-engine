@@ -272,6 +272,7 @@ class EothelloBot:
         """Traite une partie spécifique"""
         try:
             game_info = self.parse_game_page(game_id)
+            logger.debug(f"Traitement de la partie {game_id}: {game_info}")
             if not game_info:
                 return
             
@@ -286,10 +287,7 @@ class EothelloBot:
             current_move_count = len(game_info['moves'])
             
             # Vérifier si c'est notre tour et s'il y a de nouveaux coups
-            if (game_info['turn'] == our_color and 
-                current_move_count > self.current_games[game_id].get('last_move_count', 0)):
-                
-                
+            if game_info['turn'] == our_color:
                 # Construire la position actuelle
                 position = "".join(game_info['moves'])
                 
