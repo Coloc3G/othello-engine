@@ -11,10 +11,10 @@ import logging
 from dotenv import load_dotenv
 
 # Charger les variables d'environnement depuis le fichier .env
-load_dotenv("eothello/.env")
+load_dotenv(".env")
 
 # Configuration depuis les variables d'environnement
-BINARY_PATH = os.getenv("BINARY_PATH", "v3_cli.exe")
+BINARY_PATH = os.getenv("BINARY_PATH")
 GAMES_CHECK_INTERVAL = int(os.getenv("GAMES_CHECK_INTERVAL", "600"))
 MOVES_CHECK_INTERVAL = int(os.getenv("MOVES_CHECK_INTERVAL", "60"))
 REQUEST_DELAY = int(os.getenv("REQUEST_DELAY", "1"))
