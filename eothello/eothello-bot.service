@@ -1,0 +1,40 @@
+[Unit]
+Description=eOthello Bot - Automated Othello Player
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=axel
+Group=axel
+WorkingDirectory=/opt/othello-engine/eothello
+ExecStart=/usr/bin/python3 /opt/othello-engine/eothello/play.py
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONPATH=/opt/othello-engine/eothello
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=eothello-bot
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/othello-engine
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
