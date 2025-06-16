@@ -3,17 +3,17 @@ package learning
 // Constants for coefficient ranges - keep these
 const (
 	MaterialMin  = 1
-	MaterialMax  = 5000
+	MaterialMax  = 1000
 	MobilityMin  = 1
-	MobilityMax  = 5000
+	MobilityMax  = 1000
 	CornersMin   = 1
-	CornersMax   = 5000
+	CornersMax   = 1000
 	ParityMin    = 1
-	ParityMax    = 5000
+	ParityMax    = 1000
 	StabilityMin = 1
-	StabilityMax = 5000
+	StabilityMax = 1000
 	FrontierMin  = 1
-	FrontierMax  = 5000
+	FrontierMax  = 1000
 )
 
 // New improved mutation parameters
@@ -32,4 +32,16 @@ const (
 
 	// Completely new value generation (very rare)
 	RerollRate = 0.01
+)
+
+// Hybrid training parameters
+const (
+	// Seuil minimum de positions pour utiliser le GPU
+	DefaultGPUThreshold = 1000
+
+	// Batch GPU après chaque génération
+	DefaultBatchFrequency = 1
+
+	// Collecte des positions activée par défaut
+	DefaultPositionCollection = true
 )

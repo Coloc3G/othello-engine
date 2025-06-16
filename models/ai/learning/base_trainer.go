@@ -14,6 +14,7 @@ import (
 // BaseTrainer implements common trainer functionality
 type BaseTrainer struct {
 	Models         []EvaluationModel
+	BaseModel      evaluation.EvaluationCoefficients
 	BestModel      EvaluationModel
 	Generation     int
 	PopulationSize int
@@ -24,13 +25,14 @@ type BaseTrainer struct {
 }
 
 // NewBaseTrainer creates a new base trainer
-func NewBaseTrainer(popSize int) *BaseTrainer {
+func NewBaseTrainer(popSize, numGames, depth int, baseModelCoeffs evaluation.EvaluationCoefficients) *BaseTrainer {
 	return &BaseTrainer{
 		Models:         make([]EvaluationModel, 0),
+		BaseModel:      baseModelCoeffs,
 		PopulationSize: popSize,
-		MutationRate:   0.3, // increased mutation rate
-		NumGames:       100,
-		MaxDepth:       5,
+		MutationRate:   0.3,
+		NumGames:       numGames,
+		MaxDepth:       depth,
 		Generation:     1,
 		Stats:          stats.NewPerformanceStats(),
 	}
@@ -43,7 +45,7 @@ func (t *BaseTrainer) createNextGeneration() {
 	newModels := make([]EvaluationModel, t.PopulationSize)
 
 	// Increase elitism to preserve more good models
-	eliteCount := t.PopulationSize / 4 // 25% elitism instead of 20%
+	eliteCount := t.PopulationSize / 4
 	copy(newModels[:eliteCount], t.Models[:eliteCount])
 
 	// Fill the rest with crossover and mutation
@@ -51,8 +53,8 @@ func (t *BaseTrainer) createNextGeneration() {
 		crossoverStart := time.Now()
 
 		// Use larger tournament size to focus on better models
-		parent1 := t.tournamentSelect(5) // Increased from 3
-		parent2 := t.tournamentSelect(5) // Increased from 3
+		parent1 := t.tournamentSelect(5)
+		parent2 := t.tournamentSelect(5)
 
 		// Crossover
 		child := t.crossover(parent1, parent2)

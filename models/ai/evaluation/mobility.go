@@ -10,17 +10,10 @@ func NewMobilityEvaluation() *MobilityEvaluation {
 	return &MobilityEvaluation{}
 }
 
-// Add a raw evaluation function that doesn't normalize the score
-func (e *MobilityEvaluation) rawEvaluate(b game.Board, player game.Player) int {
+func (e *MobilityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	playerMoves := len(game.ValidMoves(b, player.Color))
 	opponent := game.GetOpponentColor(player.Color)
 	opponentMoves := len(game.ValidMoves(b, opponent))
 
-	// Simple difference, no normalization
 	return playerMoves - opponentMoves
-}
-
-// Evaluate computes the mobility score
-func (e *MobilityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	return e.rawEvaluate(b, player)
 }

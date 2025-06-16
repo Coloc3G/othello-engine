@@ -13,29 +13,15 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-// Consolidated type for training position tracking
-type BatchPosition struct {
-	board       game.Board
-	player      game.Piece
-	modelIndex  int
-	openingIdx  int
-	playerIndex int
-}
-
 // PlayMatchWithOpening plays a match between a model and a standard AI using a specific opening
 // This is the central match playing function used by both tournament and evaluation
 func PlayMatchWithOpening(
-	model EvaluationModel,
 	modelEval, standardEval evaluation.Evaluation,
 	op opening.Opening,
-	playerIndex, maxDepth int,
-	collectPositions bool,
-	modelIdx, openingIdx, playerPos int,
-	positions *[]BatchPosition,
-	mutex *sync.Mutex) (win, loss, draw bool) {
-
+	playerIndex, maxDepth int) (win, loss, draw bool) {
 	// Create a new game
-	g := game.NewGame("Model", "Standard")
+	g := game.NewGame("Black", "White")
+	var blackCount, whiteCount int
 
 	// Apply opening moves
 	applyOpening(g, op)
@@ -43,105 +29,28 @@ func PlayMatchWithOpening(
 	// Determine player model (alternate between games)
 	playerModel := &g.Players[playerIndex]
 
-	// Check if we're using a GPU evaluation for the model
-	useGPU := false
-	if gpuEval, ok := modelEval.(*evaluation.GPUMixedEvaluation); ok {
-		useGPU = true
-		// Ensure coefficients are set in CUDA
-		evaluation.SetCUDACoefficients(gpuEval.Coeffs)
-	}
-
-	// Also ensure standard evaluation uses GPU if available
-	useStandardGPU := false
-	if evaluation.IsGPUAvailable() {
-		// Convert standard evaluation to GPU version if it's not already
-		if _, ok := standardEval.(*evaluation.GPUMixedEvaluation); !ok {
-			// Create a GPU version with same coefficients
-			if mixedEval, ok := standardEval.(*evaluation.MixedEvaluation); ok {
-				coeffs := evaluation.EvaluationCoefficients{
-					Name:            "Standard",
-					MaterialCoeffs:  mixedEval.MaterialCoeff,
-					MobilityCoeffs:  mixedEval.MobilityCoeff,
-					CornersCoeffs:   mixedEval.CornersCoeff,
-					ParityCoeffs:    mixedEval.ParityCoeff,
-					StabilityCoeffs: mixedEval.StabilityCoeff,
-					FrontierCoeffs:  mixedEval.FrontierCoeff,
-				}
-				gpuStandardEval := evaluation.NewGPUMixedEvaluation(coeffs)
-				standardEval = gpuStandardEval
-				useStandardGPU = true
-				evaluation.SetCUDACoefficients(coeffs)
-			}
-		} else {
-			useStandardGPU = true
-		}
-	}
-
 	// Play the game until completion
 	moveCount := 0
 	for !game.IsGameFinished(g.Board) {
-		moveCount++
-		if g.CurrentPlayer.Color == playerModel.Color {
-			// Model player's turn
-			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-				var pos game.Position
-
-				// If collecting positions for GPU batch processing
-				if collectPositions && useGPU && mutex != nil {
-					mutex.Lock()
-					*positions = append(*positions, BatchPosition{
-						board:       g.Board,
-						player:      g.CurrentPlayer.Color,
-						modelIndex:  modelIdx,
-						openingIdx:  openingIdx,
-						playerIndex: playerPos,
-					})
-					mutex.Unlock()
-				}
-
-				// Get the move based on evaluation type
-				if useGPU {
-					gpuPos, success := evaluation.GPUSolveCmpCPU(*g, g.CurrentPlayer, maxDepth, model.Coeffs)
-					if success {
-						pos = gpuPos
-					} else {
-						// Fall back to CPU search
-						pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, modelEval)
-					}
-				} else {
-					// Use CPU search
-					pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, modelEval)
-				}
-
-				g.ApplyMove(pos)
+		if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
+			var currentEval evaluation.Evaluation
+			if g.CurrentPlayer.Color == playerModel.Color {
+				currentEval = modelEval
 			} else {
-				// Skip turn if no valid moves
-				g.CurrentPlayer = g.GetOtherPlayerMethod()
+				currentEval = standardEval
 			}
+			pos, _ := evaluation.Solve(*g, g.CurrentPlayer, maxDepth, currentEval)
+			ok := g.ApplyMove(pos)
+			if !ok {
+				if g.CurrentPlayer.Color == playerModel.Color {
+					return false, false, true
+				} else {
+					return true, false, false
+				}
+			}
+			moveCount++
 		} else {
-			// Standard player's turn
-			if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-				var pos game.Position
-
-				// Try to use GPU for standard AI as well
-				if useStandardGPU {
-					gpuPos, success := evaluation.GPUSolveCmpCPU(*g, g.CurrentPlayer, maxDepth, evaluation.V1Coeff)
-					if success {
-						pos = gpuPos
-					} else {
-						// Fall back to CPU search
-						pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
-					}
-				} else {
-					// Use CPU search
-					pos = evaluation.Solve(*g, g.CurrentPlayer, maxDepth, standardEval)
-				}
-
-				g.ApplyMove(pos)
-			} else {
-				// Skip turn if no valid moves
-				g.CurrentPlayer = g.GetOtherPlayerMethod()
-			}
+			g.CurrentPlayer = g.GetOtherPlayerMethod()
 		}
 
 		// Safety check to prevent infinite games
@@ -152,7 +61,7 @@ func PlayMatchWithOpening(
 	}
 
 	// Determine winner
-	blackCount, whiteCount := game.CountPieces(g.Board)
+	blackCount, whiteCount = game.CountPieces(g.Board)
 
 	// Return result from model's perspective
 	if playerModel.Color == game.Black {
@@ -236,7 +145,7 @@ func SelectRandomOpenings(numGames int) []opening.Opening {
 // evaluateModelsInParallel evaluates multiple models in parallel
 func evaluateModelsInParallel(
 	models []*EvaluationModel,
-	createEvalFunc func(EvaluationModel) evaluation.Evaluation,
+	baseModel evaluation.EvaluationCoefficients,
 	maxDepth int,
 	numGames int,
 	s *stats.PerformanceStats) {
@@ -256,18 +165,7 @@ func evaluateModelsInParallel(
 	bar.RenderBlank()
 
 	// Standard evaluation for opponent
-	standardEval := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V1Coeff)
-
-	// Prepare batch structures for GPU evaluation
-	var positions []BatchPosition
-	collectPositions := false
-
-	// Check if we're using GPU
-	if _, ok := createEvalFunc(*models[0]).(*evaluation.GPUMixedEvaluation); ok && evaluation.IsGPUAvailable() {
-		collectPositions = true
-		// Pre-allocate space for collecting positions
-		positions = make([]BatchPosition, 0, totalMatches*30) // Estimate average positions per game
-	}
+	standardEval := evaluation.NewMixedEvaluationWithCoefficients(baseModel)
 
 	// Launch goroutines for each model
 	for i := range models {
@@ -285,7 +183,7 @@ func evaluateModelsInParallel(
 
 			// Create custom evaluation function
 			startEval := time.Now()
-			evalFunc := createEvalFunc(*model)
+			evalFunc := evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
 
 			// Record evaluation creation time
 			evalCreationTime := time.Since(startEval)
@@ -293,14 +191,13 @@ func evaluateModelsInParallel(
 			localStats.Counts["eval_created"] = 1
 
 			// Play games against standard AI with selected openings
-			for openingIdx, op := range selectedOpenings {
+			for _, op := range selectedOpenings {
 				for playerIdx := range 2 {
 					startMatch := time.Now()
 
 					// Play the match
 					win, loss, draw := PlayMatchWithOpening(
-						*model, evalFunc, standardEval, op, playerIdx, maxDepth,
-						collectPositions, modelIdx, openingIdx, playerIdx, &positions, &mutex)
+						evalFunc, standardEval, op, playerIdx, maxDepth)
 
 					// Record game result
 					if win {

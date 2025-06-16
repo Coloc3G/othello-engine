@@ -1,9 +1,0 @@
-EXPORTS
-    initCUDA
-    setCoefficients
-    evaluateStates
-    findBestMove
-    hasValidMoves
-    isGameFinished
-    cleanupCUDA
-    getGPUMemoryInfo

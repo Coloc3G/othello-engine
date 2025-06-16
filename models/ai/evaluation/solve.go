@@ -9,18 +9,21 @@ import (
 )
 
 // Solve finds the best move for a player using minimax with alpha-beta pruning
-func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Position {
+func Solve(g game.Game, player game.Player, depth int, eval Evaluation) (game.Position, int) {
 	bestScore := -1 << 31
 	var bestMove game.Position
 
 	validMoves := game.ValidMoves(g.Board, player.Color)
 	if len(validMoves) == 0 {
-		return game.Position{Row: -1, Col: -1}
+		return game.Position{Row: -1, Col: -1}, -1
 	}
 
 	// If only one move is available, return it immediately
 	if len(validMoves) == 1 {
-		return validMoves[0]
+		bestMove = validMoves[0]
+		g.ApplyMove(bestMove)
+		bestScore = eval.Evaluate(g, g.Board, player)
+		return bestMove, bestScore
 	}
 
 	// Sort moves by row,col for deterministic ordering that matches CUDA implementation
@@ -50,7 +53,7 @@ func Solve(g game.Game, player game.Player, depth int, eval Evaluation) game.Pos
 		}
 	}
 
-	return bestMove
+	return bestMove, bestScore
 }
 
 // MMAB performs minimax search with alpha-beta pruning
@@ -64,12 +67,7 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 		// Track evaluation time
 		if perfStats != nil {
 			evalTime := time.Since(evalStartTime)
-			_, isGPUEval := eval.(*GPUMixedEvaluation)
-			if isGPUEval && IsGPUAvailable() {
-				perfStats.RecordOperation("gpu_leaf_eval", evalTime)
-			} else {
-				perfStats.RecordOperation("cpu_leaf_eval", evalTime)
-			}
+			perfStats.RecordOperation("cpu_leaf_eval", evalTime)
 		}
 
 		return score

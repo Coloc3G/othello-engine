@@ -10,8 +10,7 @@ func NewCornersEvaluation() *CornersEvaluation {
 	return &CornersEvaluation{}
 }
 
-// Add a raw evaluation function that doesn't normalize the score
-func (e *CornersEvaluation) rawEvaluate(b game.Board, player game.Player) int {
+func (e *CornersEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
 	playerCorners := 0
 	opponentCorners := 0
 	opponent := game.GetOpponentColor(player.Color)
@@ -41,11 +40,5 @@ func (e *CornersEvaluation) rawEvaluate(b game.Board, player game.Player) int {
 		opponentCorners++
 	}
 
-	// Simple difference, no normalization
 	return playerCorners - opponentCorners
-}
-
-// Evaluate computes the corners score
-func (e *CornersEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	return e.rawEvaluate(b, player)
 }

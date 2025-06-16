@@ -182,7 +182,7 @@ func (s *GameScreen) Update() error {
 		if currentTime.Sub(s.ui.aivsAiTimer) >= s.ui.aivsAiMoveDelay {
 			// Time to make another AI move
 			eval := s.evaluator
-			pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
+			pos, _ := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
 
 			// Apply move and update evaluation
 			if s.ui.game.ApplyMove(pos) {
@@ -223,7 +223,7 @@ func (s *GameScreen) Update() error {
 	} else if s.ui.game.CurrentPlayer.Name != "Human" {
 		// Handle AI move
 		eval := s.evaluator
-		pos := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
+		pos, _ := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
 
 		// Apply move and update evaluation
 		if s.ui.game.ApplyMove(pos) {

@@ -102,12 +102,12 @@ func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
 
 	// Get all raw evaluation scores without normalization to match CUDA implementation
-	materialScore := e.MaterialEvaluation.rawEvaluate(b, player)
-	mobilityScore := e.MobilityEvaluation.rawEvaluate(b, player)
-	cornersScore := e.CornersEvaluation.rawEvaluate(b, player)
+	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
+	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
+	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
 	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
 	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.rawEvaluate(b, player)
+	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
 
 	return materialCoeff*materialScore +
 		mobilityCoeff*mobilityScore +
@@ -131,7 +131,7 @@ func (e *MixedEvaluation) ComputeGamePhaseCoefficients(board game.Board) (int, i
 	var phase int
 	if pieceCount < 20 {
 		phase = 0 // Early game
-	} else if pieceCount <= 58 {
+	} else if pieceCount <= 50 {
 		phase = 1 // Mid game
 	} else {
 		phase = 2 // Late game

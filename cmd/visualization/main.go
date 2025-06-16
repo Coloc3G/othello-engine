@@ -29,9 +29,8 @@ type PerformanceResult struct {
 
 func main() {
 	// Parse command line flags
-	numGames := flag.Int("games", 500, "Number of games to run for each comparison")
+	numGames := flag.Int("games", 100, "Number of games to run for each comparison")
 	searchDepth := flag.Int("depth", 5, "Search depth for AI")
-	useOpenings := flag.Bool("openings", true, "Use random openings for games")
 	generateHTML := flag.Bool("html", true, "Generate HTML visualization files")
 	showASCII := flag.Bool("ascii", true, "Show ASCII visualization in terminal")
 	flag.Parse()
@@ -40,7 +39,7 @@ func main() {
 	fmt.Printf("Running with %d games at depth %d\n", *numGames, *searchDepth)
 
 	// Run all comparisons and generate results
-	results := runAllComparisons(*numGames, *searchDepth, *useOpenings)
+	results := runAllComparisons(*numGames, *searchDepth)
 
 	// Create visualizations
 	if *generateHTML {
@@ -53,12 +52,12 @@ func main() {
 }
 
 // runAllComparisons runs all comparisons and returns results
-func runAllComparisons(numGames, searchDepth int, useOpenings bool) []PerformanceResult {
+func runAllComparisons(numGames, searchDepth int) []PerformanceResult {
 	results := make([]PerformanceResult, 0)
 
 	// Compare V1 vs V2
 	fmt.Println("Comparing V1 vs V2...")
-	v1v2Stats := CompareCoefficients(evaluation.V1Coeff, evaluation.V2Coeff, numGames, searchDepth)
+	v1v2Stats := CompareCoefficients(evaluation.V2Coeff, evaluation.V3Coeff, numGames, searchDepth)
 	results = append(results, PerformanceResult{
 		Version1Name:   "V1",
 		Version2Name:   "V2",

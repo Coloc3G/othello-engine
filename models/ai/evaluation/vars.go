@@ -20,4 +20,29 @@ var (
 		StabilityCoeffs: []int{0, 21, 85},
 		FrontierCoeffs:  []int{0, 86, 0},
 	}
+
+	V3Coeff = EvaluationCoefficients{
+		Name:            "V1",
+		MaterialCoeffs:  []int{0, 10, 1000},
+		MobilityCoeffs:  []int{50, 250, 500},
+		CornersCoeffs:   []int{1000, 1000, 1000},
+		ParityCoeffs:    []int{0, 100, 500},
+		StabilityCoeffs: []int{0, 100, 200},
+		FrontierCoeffs:  []int{0, 100, 200},
+	}
+
+	Models []EvaluationCoefficients = []EvaluationCoefficients{
+		V1Coeff,
+		V2Coeff,
+		V3Coeff,
+	}
 )
+
+func GetCoefficientsByName(name string) (EvaluationCoefficients, bool) {
+	for _, coeff := range Models {
+		if coeff.Name == name {
+			return coeff, true
+		}
+	}
+	return EvaluationCoefficients{}, false
+}

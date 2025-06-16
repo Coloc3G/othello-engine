@@ -17,42 +17,6 @@ type EvaluationModel struct {
 	Draws      int                               `json:"draws"`
 }
 
-// mutateCoefficient applies random mutation to a single coefficient
-func mutateCoefficient(value, min, max int) int {
-	// Apply small mutation most of the time
-	if rand.Float64() < SmallMutationRate {
-		delta := rand.Intn(SmallDeltaMax*2+1) - SmallDeltaMax
-		value += delta
-	}
-
-	// Apply medium mutation occasionally
-	if rand.Float64() < MediumMutationRate {
-		delta := rand.Intn(MediumDeltaMax*2+1) - MediumDeltaMax
-		value += delta
-	}
-
-	// Apply large mutation rarely
-	if rand.Float64() < LargeMutationRate {
-		delta := rand.Intn(LargeDeltaMax*2+1) - LargeDeltaMax
-		value += delta
-	}
-
-	// Completely reroll value with very low probability
-	if rand.Float64() < RerollRate {
-		value = min + rand.Intn(max-min+1)
-	}
-
-	// Ensure value is within bounds
-	if value < min {
-		value = min
-	}
-	if value > max {
-		value = max
-	}
-
-	return value
-}
-
 // Generate a random model for evaluation
 func GenerateRandomModel() EvaluationModel {
 	model := EvaluationModel{
@@ -69,7 +33,7 @@ func GenerateRandomModel() EvaluationModel {
 	}
 
 	// Generate random coefficients within bounds
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		model.Coeffs.MaterialCoeffs[i] = MaterialMin + rand.Intn(MaterialMax-MaterialMin+1)
 		model.Coeffs.MobilityCoeffs[i] = MobilityMin + rand.Intn(MobilityMax-MobilityMin+1)
 		model.Coeffs.CornersCoeffs[i] = CornersMin + rand.Intn(CornersMax-CornersMin+1)
