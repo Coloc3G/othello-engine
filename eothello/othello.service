@@ -9,9 +9,6 @@ User=axel
 Group=axel
 WorkingDirectory=/opt/othello-engine/eothello
 ExecStart=/usr/bin/python3 /opt/othello-engine/eothello/play.py
-Environment=PATH=/usr/local/bin:/usr/bin:/bin
-Environment=PYTHONPATH=/opt/othello-engine/eothello
-Environment=PYTHONUNBUFFERED=1
 Restart=always
 RestartSec=10
 StandardOutput=journal
