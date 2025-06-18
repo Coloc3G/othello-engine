@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
@@ -53,24 +52,9 @@ func main() {
 
 // runAllComparisons runs all comparisons and returns results
 func runAllComparisons(numGames, searchDepth int) []PerformanceResult {
-	results := make([]PerformanceResult, 0)
-
 	// Compare V1 vs V2
 	fmt.Println("Comparing V1 vs V2...")
-	v1v2Stats := CompareCoefficients(evaluation.V2Coeff, evaluation.V3Coeff, numGames, searchDepth)
-	results = append(results, PerformanceResult{
-		Version1Name:   "V1",
-		Version2Name:   "V2",
-		Version1Wins:   v1v2Stats.Version1Wins,
-		Version2Wins:   v1v2Stats.Version2Wins,
-		Draws:          v1v2Stats.Draws,
-		TotalGames:     v1v2Stats.TotalGames,
-		Version1WinPct: v1v2Stats.Version1WinPct,
-		Version2WinPct: v1v2Stats.Version2WinPct,
-		DrawPct:        v1v2Stats.DrawPct,
-	})
-	PrintComparison(v1v2Stats)
-
+	results := CompareVersions(numGames, searchDepth)
 	return results
 }
 

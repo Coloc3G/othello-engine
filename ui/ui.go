@@ -97,7 +97,7 @@ func (s *UI) SwitchToDualAISelectionScreen() {
 // StartPlayerVsAIGame starts a game with a human player against the selected AI
 func (s *UI) StartPlayerVsAIGame(aiVersion int) {
 	// Create game with human player vs AI
-	s.game = game.NewGame("Human", getAIVersionName(aiVersion))
+	s.game = game.NewGame(getAIVersionName(aiVersion), "Human")
 	s.aivsAiMode = false
 
 	// Reset the game screen

@@ -1,0 +1,2464 @@
+{
+  "generation": 1,
+  "best_fitness": 14,
+  "avg_fitness": 9.175,
+  "best_model": {
+    "coeffs": {
+      "material_coeff": [
+        0,
+        10,
+        1000
+      ],
+      "mobility_coeff": [
+        50,
+        260,
+        578
+      ],
+      "corners_coeff": [
+        1000,
+        1000,
+        1000
+      ],
+      "parity_coeff": [
+        0,
+        100,
+        500
+      ],
+      "stability_coeff": [
+        25,
+        82,
+        200
+      ],
+      "frontier_coeff": [
+        0,
+        76,
+        200
+      ],
+      "name": "V3"
+    },
+    "generation": 1,
+    "fitness": 14,
+    "wins": 14,
+    "losses": 6,
+    "draws": 0
+  },
+  "all_models": [
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          260,
+          578
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          25,
+          82,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          76,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 14,
+      "wins": 14,
+      "losses": 6,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          25,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          984,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          75,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          74,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 13,
+      "wins": 13,
+      "losses": 7,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          89,
+          500
+        ],
+        "stability_coeff": [
+          20,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          13,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 13,
+      "wins": 13,
+      "losses": 7,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          48,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          504
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          1,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          100,
+          179
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          213
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 13,
+      "wins": 13,
+      "losses": 7,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          16,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          517
+        ],
+        "corners_coeff": [
+          987,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          12,
+          210
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 12,
+      "wins": 12,
+      "losses": 8,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          47,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          254,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          9,
+          121,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          194
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 12,
+      "wins": 12,
+      "losses": 8,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          19,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          115,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 12,
+      "wins": 12,
+      "losses": 8,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          978
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          487
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          984
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          85,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          177
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 12,
+      "wins": 12,
+      "losses": 8,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          24,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          272,
+          500
+        ],
+        "corners_coeff": [
+          989,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          514
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          224
+        ],
+        "frontier_coeff": [
+          0,
+          84,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 11.5,
+      "wins": 11,
+      "losses": 8,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          997
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          85,
+          491
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          239
+        ],
+        "frontier_coeff": [
+          0,
+          98,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 11,
+      "wins": 10,
+      "losses": 8,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          258,
+          541
+        ],
+        "corners_coeff": [
+          988,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 11,
+      "wins": 11,
+      "losses": 9,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          60,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          105,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          99,
+          217
+        ],
+        "frontier_coeff": [
+          8,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 11,
+      "wins": 11,
+      "losses": 9,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          31,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          231,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          77,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 11,
+      "wins": 11,
+      "losses": 9,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          12,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          517
+        ],
+        "corners_coeff": [
+          959,
+          1000,
+          988
+        ],
+        "parity_coeff": [
+          9,
+          86,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          206
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10.5,
+      "wins": 10,
+      "losses": 9,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          7,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          268,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          975
+        ],
+        "parity_coeff": [
+          0,
+          87,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          62
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10.5,
+      "wins": 10,
+      "losses": 9,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          49,
+          250,
+          509
+        ],
+        "corners_coeff": [
+          979,
+          975,
+          1000
+        ],
+        "parity_coeff": [
+          8,
+          100,
+          507
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          225,
+          483
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          996
+        ],
+        "parity_coeff": [
+          0,
+          119,
+          501
+        ],
+        "stability_coeff": [
+          0,
+          99,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          121,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          63,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          508
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          52,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          188
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          7,
+          1000
+        ],
+        "mobility_coeff": [
+          71,
+          233,
+          55
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          978
+        ],
+        "parity_coeff": [
+          14,
+          100,
+          476
+        ],
+        "stability_coeff": [
+          208,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          27,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          980,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          33,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          988
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          523
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          192
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          230,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          484
+        ],
+        "stability_coeff": [
+          1,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          121,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          970
+        ],
+        "mobility_coeff": [
+          55,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          125,
+          521
+        ],
+        "stability_coeff": [
+          0,
+          90,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          59,
+          250,
+          498
+        ],
+        "corners_coeff": [
+          1000,
+          980,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          199
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          92,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          75,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          117,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          90,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 10,
+      "wins": 9,
+      "losses": 9,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          341
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          219
+        ],
+        "frontier_coeff": [
+          0,
+          76,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9.5,
+      "wins": 9,
+      "losses": 10,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          77,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          208
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9.5,
+      "wins": 9,
+      "losses": 10,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          119,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          95,
+          183
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          717
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          184
+        ],
+        "frontier_coeff": [
+          9,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          481
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          998
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          110,
+          218
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          152
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          14,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          49,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          121,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          1,
+          976
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          997,
+          931,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          80,
+          495
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          108,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          227,
+          484
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          98,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          65,
+          10,
+          996
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          15,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          65,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          998,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          102,
+          366
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          101,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          12,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          67,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          122,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8.5,
+      "wins": 8,
+      "losses": 11,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          37,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          97,
+          500
+        ],
+        "stability_coeff": [
+          727,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          22,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          233,
+          487
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          45,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          15,
+          85,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          11,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          986,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          20,
+          997
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          976
+        ],
+        "parity_coeff": [
+          0,
+          93,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          25,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          211
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          10,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          562
+        ],
+        "corners_coeff": [
+          991,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          14,
+          255,
+          500
+        ],
+        "stability_coeff": [
+          10,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7.5,
+      "wins": 7,
+      "losses": 12,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          240,
+          512
+        ],
+        "corners_coeff": [
+          1000,
+          984,
+          992
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          148
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          210
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7.5,
+      "wins": 7,
+      "losses": 12,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          94,
+          495
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7.5,
+      "wins": 7,
+      "losses": 12,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          79,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          26,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          6,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          189
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          482
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7,
+      "wins": 7,
+      "losses": 13,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          66,
+          260,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          95,
+          479
+        ],
+        "stability_coeff": [
+          16,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7,
+      "wins": 7,
+      "losses": 13,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          30,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          285,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          122,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          81,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          191
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 7,
+      "wins": 7,
+      "losses": 13,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          15,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          15,
+          88,
+          500
+        ],
+        "stability_coeff": [
+          364,
+          100,
+          214
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          187
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6.5,
+      "wins": 6,
+      "losses": 13,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          1,
+          242,
+          512
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          987
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          78,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6.5,
+      "wins": 6,
+      "losses": 13,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          20,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          1,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          20,
+          12,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          274,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          203
+        ],
+        "frontier_coeff": [
+          0,
+          119,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          898
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          21,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          123,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          496
+        ],
+        "stability_coeff": [
+          9,
+          100,
+          177
+        ],
+        "frontier_coeff": [
+          0,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          514
+        ],
+        "stability_coeff": [
+          0,
+          117,
+          200
+        ],
+        "frontier_coeff": [
+          147,
+          100,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          10,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          253,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          0,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          117,
+          200
+        ],
+        "frontier_coeff": [
+          1,
+          96,
+          194
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 6,
+      "wins": 6,
+      "losses": 14,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          0,
+          834,
+          1000
+        ],
+        "mobility_coeff": [
+          50,
+          250,
+          500
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          100,
+          500
+        ],
+        "stability_coeff": [
+          0,
+          100,
+          200
+        ],
+        "frontier_coeff": [
+          0,
+          123,
+          200
+        ],
+        "name": "V3"
+      },
+      "generation": 1,
+      "fitness": 1,
+      "wins": 1,
+      "losses": 19,
+      "draws": 0
+    }
+  ],
+  "timestamp": "2025-06-17T17:07:55+02:00",
+  "performance": {
+    "evaluation_time_ms": 421428,
+    "tournament_time_ms": 0,
+    "crossover_time_ms": 0,
+    "mutation_time_ms": 0,
+    "total_time_ms": 0
+  },
+  "stats_counts": {
+    "eval_created": 60,
+    "matches_played": 1200
+  },
+  "timing_stats": {
+    "eval_creation": "0s",
+    "evaluation": "7m1.4283426s",
+    "match": "6h20m39.7284448s"
+  }
+}

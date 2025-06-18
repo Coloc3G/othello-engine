@@ -1,0 +1,2468 @@
+{
+  "generation": 15,
+  "best_fitness": 17.5,
+  "avg_fitness": 11.933333333333334,
+  "best_model": {
+    "coeffs": {
+      "material_coeff": [
+        1,
+        9,
+        114
+      ],
+      "mobility_coeff": [
+        57,
+        195,
+        390
+      ],
+      "corners_coeff": [
+        1000,
+        1000,
+        1000
+      ],
+      "parity_coeff": [
+        67,
+        287,
+        473
+      ],
+      "stability_coeff": [
+        28,
+        94,
+        270
+      ],
+      "frontier_coeff": [
+        70,
+        81,
+        376
+      ],
+      "name": "Model_Gen13"
+    },
+    "generation": 14,
+    "fitness": 17.5,
+    "wins": 17,
+    "losses": 2,
+    "draws": 1
+  },
+  "all_models": [
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 17.5,
+      "wins": 17,
+      "losses": 2,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          108
+        ],
+        "mobility_coeff": [
+          57,
+          170,
+          415
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          982
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          96,
+          289
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 17,
+      "wins": 17,
+      "losses": 3,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          278,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          255
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 16.5,
+      "wins": 16,
+      "losses": 3,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          35,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          89,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          269
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          356
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 16.5,
+      "wins": 16,
+      "losses": 3,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          356
+        ],
+        "name": "Model_Gen12"
+      },
+      "generation": 13,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          122
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          69,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          197
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          126
+        ],
+        "mobility_coeff": [
+          57,
+          198,
+          601
+        ],
+        "corners_coeff": [
+          940,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          57,
+          246,
+          476
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          257
+        ],
+        "frontier_coeff": [
+          53,
+          83,
+          356
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          127
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          977
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          78,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          65,
+          195,
+          402
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          985
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          79,
+          81,
+          383
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          58,
+          193,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          43,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          106
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          478
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          76,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          255
+        ],
+        "corners_coeff": [
+          1000,
+          989,
+          1000
+        ],
+        "parity_coeff": [
+          425,
+          309,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          251
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          175,
+          599
+        ],
+        "corners_coeff": [
+          980,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          489
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          292
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          356
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          286
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          356
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          11,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          996,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          466
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          356
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 15.5,
+      "wins": 15,
+      "losses": 4,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          592
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          17,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          100,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          97,
+          356
+        ],
+        "name": "Model_Gen12"
+      },
+      "generation": 13,
+      "fitness": 15,
+      "wins": 15,
+      "losses": 5,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          100,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          97,
+          356
+        ],
+        "name": "Model_Gen11"
+      },
+      "generation": 12,
+      "fitness": 15,
+      "wins": 15,
+      "losses": 5,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          976,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          100,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          97,
+          356
+        ],
+        "name": "Model_Gen12"
+      },
+      "generation": 13,
+      "fitness": 15,
+      "wins": 15,
+      "losses": 5,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          401
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          85,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          84,
+          81,
+          366
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          55,
+          195,
+          595
+        ],
+        "corners_coeff": [
+          1000,
+          988,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          241,
+          510
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          336
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          145
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          613
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          286
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          374
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          145
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          982,
+          1000
+        ],
+        "parity_coeff": [
+          86,
+          264,
+          464
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          81,
+          402
+        ],
+        "name": "Model_Gen13"
+      },
+      "generation": 14,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          90
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          383
+        ],
+        "corners_coeff": [
+          980,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          486
+        ],
+        "stability_coeff": [
+          31,
+          94,
+          255
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          113
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          1,
+          264,
+          486
+        ],
+        "stability_coeff": [
+          28,
+          100,
+          275
+        ],
+        "frontier_coeff": [
+          50,
+          97,
+          356
+        ],
+        "name": "Model_Gen12"
+      },
+      "generation": 13,
+      "fitness": 14.5,
+      "wins": 14,
+      "losses": 5,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          124
+        ],
+        "mobility_coeff": [
+          57,
+          184,
+          599
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          817,
+          264,
+          528
+        ],
+        "stability_coeff": [
+          28,
+          100,
+          270
+        ],
+        "frontier_coeff": [
+          50,
+          97,
+          356
+        ],
+        "name": "Model_Gen12"
+      },
+      "generation": 13,
+      "fitness": 14,
+      "wins": 14,
+      "losses": 6,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          120
+        ],
+        "mobility_coeff": [
+          57,
+          182,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          57,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 13.5,
+      "wins": 13,
+      "losses": 6,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          100
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          44,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          78,
+          84,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 13.5,
+      "wins": 13,
+      "losses": 6,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          99
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          366
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          85,
+          287,
+          495
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          85,
+          377
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 13.5,
+      "wins": 13,
+      "losses": 6,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          49,
+          191,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          95,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          368
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12.5,
+      "wins": 12,
+      "losses": 7,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          402
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          275,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          195
+        ],
+        "frontier_coeff": [
+          440,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12.5,
+      "wins": 12,
+      "losses": 7,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          103
+        ],
+        "mobility_coeff": [
+          57,
+          181,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          102,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          1,
+          377
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12.5,
+      "wins": 12,
+      "losses": 7,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          208,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          42,
+          279,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          280
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12,
+      "wins": 11,
+      "losses": 7,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          2,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          303,
+          473
+        ],
+        "stability_coeff": [
+          56,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          45,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12,
+      "wins": 12,
+      "losses": 8,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          117
+        ],
+        "mobility_coeff": [
+          57,
+          212,
+          390
+        ],
+        "corners_coeff": [
+          978,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 12,
+      "wins": 11,
+      "losses": 7,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          384
+        ],
+        "corners_coeff": [
+          1000,
+          984,
+          990
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          449
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          338
+        ],
+        "frontier_coeff": [
+          94,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 11,
+      "wins": 11,
+      "losses": 9,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          205,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          73,
+          272,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          96,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 11,
+      "wins": 10,
+      "losses": 8,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          98
+        ],
+        "mobility_coeff": [
+          78,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          494
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 10,
+      "wins": 9,
+      "losses": 9,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          93
+        ],
+        "mobility_coeff": [
+          32,
+          195,
+          369
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          291
+        ],
+        "frontier_coeff": [
+          88,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          14,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          69,
+          202,
+          400
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          47,
+          287,
+          470
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          86,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 10,
+      "wins": 10,
+      "losses": 10,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          64,
+          9,
+          127
+        ],
+        "mobility_coeff": [
+          64,
+          195,
+          395
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          276
+        ],
+        "frontier_coeff": [
+          70,
+          83,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 10,
+      "wins": 9,
+      "losses": 9,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          18,
+          13,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          76,
+          286,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 10,
+      "wins": 8,
+      "losses": 8,
+      "draws": 4
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          40,
+          193,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          467
+        ],
+        "stability_coeff": [
+          51,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          362
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9.5,
+      "wins": 9,
+      "losses": 10,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          19,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          993
+        ],
+        "parity_coeff": [
+          1,
+          287,
+          461
+        ],
+        "stability_coeff": [
+          28,
+          98,
+          246
+        ],
+        "frontier_coeff": [
+          60,
+          81,
+          358
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9.5,
+      "wins": 8,
+      "losses": 9,
+      "draws": 3
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          94
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          66,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          19,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9.5,
+      "wins": 9,
+      "losses": 10,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          113
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          405
+        ],
+        "corners_coeff": [
+          983,
+          1000,
+          986
+        ],
+        "parity_coeff": [
+          67,
+          265,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9,
+      "wins": 8,
+      "losses": 10,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          53,
+          202,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          297,
+          486
+        ],
+        "stability_coeff": [
+          29,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          60,
+          355
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9,
+      "wins": 8,
+      "losses": 10,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          55,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          344,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          42,
+          274
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          29,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          168,
+          391
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          264,
+          474
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9,
+      "wins": 8,
+      "losses": 10,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          215
+        ],
+        "mobility_coeff": [
+          68,
+          195,
+          669
+        ],
+        "corners_coeff": [
+          1000,
+          991,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          498
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          849
+        ],
+        "frontier_coeff": [
+          70,
+          97,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 9,
+      "wins": 9,
+      "losses": 11,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          115
+        ],
+        "mobility_coeff": [
+          74,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          987,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 8.5,
+      "wins": 8,
+      "losses": 11,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          73,
+          210,
+          387
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          449
+        ],
+        "stability_coeff": [
+          28,
+          79,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          73,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 8.5,
+      "wins": 8,
+      "losses": 11,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          18,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          998,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          453
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 8,
+      "wins": 6,
+      "losses": 10,
+      "draws": 4
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          403
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          989
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          51,
+          101,
+          381
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 8,
+      "wins": 7,
+      "losses": 11,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          17,
+          9,
+          48
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          72,
+          267,
+          453
+        ],
+        "stability_coeff": [
+          28,
+          31,
+          270
+        ],
+        "frontier_coeff": [
+          91,
+          81,
+          384
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 8,
+      "wins": 8,
+      "losses": 12,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          30,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          412
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          401
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          52,
+          87,
+          365
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 7.5,
+      "wins": 6,
+      "losses": 11,
+      "draws": 3
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          895,
+          9,
+          114
+        ],
+        "mobility_coeff": [
+          58,
+          195,
+          370
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          297,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          94,
+          292
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 7,
+      "wins": 6,
+      "losses": 12,
+      "draws": 2
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          24,
+          24,
+          114
+        ],
+        "mobility_coeff": [
+          74,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          994,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          473
+        ],
+        "stability_coeff": [
+          12,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          102,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 5.5,
+      "wins": 5,
+      "losses": 14,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          19,
+          114
+        ],
+        "mobility_coeff": [
+          57,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          987,
+          1000,
+          992
+        ],
+        "parity_coeff": [
+          67,
+          287,
+          644
+        ],
+        "stability_coeff": [
+          46,
+          94,
+          270
+        ],
+        "frontier_coeff": [
+          70,
+          792,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 5.5,
+      "wins": 5,
+      "losses": 14,
+      "draws": 1
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          1,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          28,
+          195,
+          403
+        ],
+        "corners_coeff": [
+          1000,
+          931,
+          1000
+        ],
+        "parity_coeff": [
+          126,
+          10,
+          473
+        ],
+        "stability_coeff": [
+          28,
+          74,
+          272
+        ],
+        "frontier_coeff": [
+          89,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 3,
+      "wins": 3,
+      "losses": 17,
+      "draws": 0
+    },
+    {
+      "coeffs": {
+        "material_coeff": [
+          16,
+          1,
+          114
+        ],
+        "mobility_coeff": [
+          71,
+          195,
+          390
+        ],
+        "corners_coeff": [
+          1000,
+          1000,
+          1000
+        ],
+        "parity_coeff": [
+          44,
+          267,
+          473
+        ],
+        "stability_coeff": [
+          328,
+          94,
+          290
+        ],
+        "frontier_coeff": [
+          70,
+          81,
+          376
+        ],
+        "name": "Model_Gen14"
+      },
+      "generation": 15,
+      "fitness": 3,
+      "wins": 3,
+      "losses": 17,
+      "draws": 0
+    }
+  ],
+  "timestamp": "2025-06-17T18:49:03+02:00",
+  "performance": {
+    "evaluation_time_ms": 6489411,
+    "tournament_time_ms": 0,
+    "crossover_time_ms": 0,
+    "mutation_time_ms": 1,
+    "total_time_ms": 6025487
+  },
+  "stats_counts": {
+    "eval_created": 900,
+    "matches_played": 18000
+  },
+  "timing_stats": {
+    "crossover": "0s",
+    "eval_creation": "261.0333ms",
+    "evaluation": "1h48m9.4117014s",
+    "generation": "1h40m25.4876893s",
+    "generation_creation": "1.4333ms",
+    "match": "96h29m44.2694895s",
+    "mutation": "1.4333ms"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "coeffs": {
+    "material_coeff": [
+      1,
+      9,
+      114
+    ],
+    "mobility_coeff": [
+      57,
+      195,
+      390
+    ],
+    "corners_coeff": [
+      1000,
+      1000,
+      1000
+    ],
+    "parity_coeff": [
+      67,
+      287,
+      473
+    ],
+    "stability_coeff": [
+      28,
+      94,
+      270
+    ],
+    "frontier_coeff": [
+      70,
+      81,
+      376
+    ],
+    "name": "Model_Gen16"
+  },
+  "generation": 17,
+  "fitness": 17.5,
+  "wins": 17,
+  "losses": 2,
+  "draws": 1
+}

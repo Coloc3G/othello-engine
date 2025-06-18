@@ -99,6 +99,10 @@ func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEva
 
 // Evaluate implements the Evaluation interface for MixedEvaluation
 func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
+	if black, white := g.CountPiecesMethod(); (player.Color == game.Black && black == 0) || (player.Color == game.White && white == 0) {
+		return -1000000
+	}
+
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
 
 	// Get all raw evaluation scores without normalization to match CUDA implementation

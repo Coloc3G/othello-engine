@@ -22,7 +22,7 @@ var (
 	}
 
 	V3Coeff = EvaluationCoefficients{
-		Name:            "V1",
+		Name:            "V3",
 		MaterialCoeffs:  []int{0, 10, 1000},
 		MobilityCoeffs:  []int{50, 250, 500},
 		CornersCoeffs:   []int{1000, 1000, 1000},
@@ -31,10 +31,21 @@ var (
 		FrontierCoeffs:  []int{0, 100, 200},
 	}
 
+	V4Coeff = EvaluationCoefficients{
+		Name:            "V4",
+		MaterialCoeffs:  []int{1, 9, 114},
+		MobilityCoeffs:  []int{57, 195, 390},
+		CornersCoeffs:   []int{1000, 1000, 1000},
+		ParityCoeffs:    []int{67, 287, 473},
+		StabilityCoeffs: []int{28, 94, 270},
+		FrontierCoeffs:  []int{70, 81, 376},
+	}
+
 	Models []EvaluationCoefficients = []EvaluationCoefficients{
 		V1Coeff,
 		V2Coeff,
 		V3Coeff,
+		V4Coeff,
 	}
 )
 

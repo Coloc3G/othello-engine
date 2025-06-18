@@ -12,24 +12,11 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-// ComparisonStats holds statistics for AI version comparisons
-type ComparisonStats struct {
-	Version1Name   string
-	Version2Name   string
-	Version1Wins   int
-	Version2Wins   int
-	Draws          int
-	TotalGames     int
-	Version1WinPct float64
-	Version2WinPct float64
-	DrawPct        float64
-}
-
 // CompareCoefficients compares two sets of evaluation coefficients concurrently
-func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGames, searchDepth int) ComparisonStats {
+func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGames, searchDepth int) PerformanceResult {
 
 	// Create stats object
-	stats := ComparisonStats{
+	stats := PerformanceResult{
 		Version1Name: coeff1.Name,
 		Version2Name: coeff2.Name,
 		TotalGames:   numGames,
@@ -181,7 +168,7 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 }
 
 // PrintComparison prints comparison statistics
-func PrintComparison(stats ComparisonStats) {
+func PrintComparison(stats PerformanceResult) {
 	fmt.Println("\n==== Comparison Results ====")
 	fmt.Printf("%s vs %s (Total games: %d)\n", stats.Version1Name, stats.Version2Name, stats.TotalGames)
 	fmt.Printf("%s wins: %d (%.1f%%)\n", stats.Version1Name, stats.Version1Wins, stats.Version1WinPct)
@@ -204,23 +191,10 @@ func PrintComparison(stats ComparisonStats) {
 	fmt.Println("===========================")
 }
 
-// CompareVersionsWithOpenings runs a comparison using random openings
-func CompareVersionsWithOpenings(numGames, searchDepth int) {
-	fmt.Println("Comparing AI versions with random openings...")
-	stats := CompareCoefficients(evaluation.V1Coeff, evaluation.V2Coeff, numGames, searchDepth)
-	PrintComparison(stats)
-}
+func CompareVersions(numGames, searchDepth int) (results []PerformanceResult) {
 
-// CompareVersions runs a comparison without using openings
-func CompareVersions(numGames, searchDepth int) {
-	// Temporarily disable openings
-	originalOpenings := opening.KNOWN_OPENINGS
-	opening.KNOWN_OPENINGS = []opening.Opening{}
+	stats := CompareCoefficients(evaluation.V4Coeff, evaluation.V1Coeff, numGames, searchDepth)
+	results = append(results, stats)
 
-	fmt.Println("Comparing AI versions without openings...")
-	stats := CompareCoefficients(evaluation.V1Coeff, evaluation.V2Coeff, numGames, searchDepth)
-	PrintComparison(stats)
-
-	// Restore openings
-	opening.KNOWN_OPENINGS = originalOpenings
+	return
 }

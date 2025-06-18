@@ -116,5 +116,5 @@ func (t *Trainer) evaluatePopulation() {
 	}
 
 	// Evaluate all models in parallel
-	evaluateModelsInParallel(modelPtrs, t.BestModel.Coeffs, t.MaxDepth, t.NumGames, t.Stats)
+	evaluateModelsInParallel(modelPtrs, t.BaseModel, t.MaxDepth, t.NumGames, t.Stats)
 }
