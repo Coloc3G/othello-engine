@@ -99,8 +99,15 @@ func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEva
 
 // Evaluate implements the Evaluation interface for MixedEvaluation
 func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	if black, white := g.CountPiecesMethod(); (player.Color == game.Black && black == 0) || (player.Color == game.White && white == 0) {
+	black, white := game.CountPieces(b)
+	if (player.Color == game.Black && black == 0) || (player.Color == game.White && white == 0) {
 		return -1000000
+	}
+	if (player.Color == game.Black && white == 0) || (player.Color == game.White && black == 0) {
+		return 1000000
+	}
+	if game.IsGameFinished(b) && (player.Color == game.Black && black > white) || (player.Color == game.White && white > black) {
+		return 1000000
 	}
 
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
