@@ -165,7 +165,7 @@ func evaluateModelsInParallel(
 	bar.RenderBlank()
 
 	// Standard evaluation for opponent
-	standardEval := evaluation.NewMixedEvaluationWithCoefficients(baseModel)
+	standardEval := evaluation.NewMixedEvaluation(baseModel)
 
 	// Launch goroutines for each model
 	for i := range models {
@@ -183,7 +183,7 @@ func evaluateModelsInParallel(
 
 			// Create custom evaluation function
 			startEval := time.Now()
-			evalFunc := evaluation.NewMixedEvaluationWithCoefficients(model.Coeffs)
+			evalFunc := evaluation.NewMixedEvaluation(model.Coeffs)
 
 			// Record evaluation creation time
 			evalCreationTime := time.Since(startEval)

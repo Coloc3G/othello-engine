@@ -11,19 +11,10 @@ func NewMaterialEvaluation() *MaterialEvaluation {
 }
 
 func (e *MaterialEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	playerPieces := 0
-	opponentPieces := 0
-	opponent := game.GetOpponentColor(player.Color)
+	pec := precomputeEvaluation(g, b, player)
+	return e.PECEvaluate(g, b, pec)
+}
 
-	for i := range 8 {
-		for j := range 8 {
-			if b[i][j] == player.Color {
-				playerPieces++
-			} else if b[i][j] == opponent {
-				opponentPieces++
-			}
-		}
-	}
-
-	return playerPieces - opponentPieces
+func (e *MaterialEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
+	return pec.PlayerPieces - pec.OpponentPieces
 }

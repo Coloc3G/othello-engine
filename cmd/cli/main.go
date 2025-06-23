@@ -27,7 +27,7 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 }
 
 func main() {
-	evaluator := evaluation.NewMixedEvaluationWithCoefficients(evaluation.V4Coeff)
+	evaluator := evaluation.NewMixedEvaluation(evaluation.V4Coeff)
 
 	for {
 		algebraicPosition := ""

@@ -58,11 +58,12 @@ func Solve(g game.Game, player game.Player, depth int, eval Evaluation) (game.Po
 
 // MMAB performs minimax search with alpha-beta pruning
 func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool, alpha, beta int, eval Evaluation, perfStats *stats.PerformanceStats) int {
+	pec := precomputeEvaluation(g, node, player)
 	// Base case: leaf node or terminal position
-	if depth == 0 || game.IsGameFinished(node) {
+	if depth == 0 || pec.IsGameOver {
 		// Evaluate position
 		evalStartTime := time.Now()
-		score := eval.Evaluate(g, node, player)
+		score := eval.PECEvaluate(g, node, pec)
 
 		// Track evaluation time
 		if perfStats != nil {
@@ -76,12 +77,9 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 	// Determine current player
 	var moves []game.Position
 	if max {
-		// Maximizing player (our player)
-		moves = game.ValidMoves(node, player.Color)
+		moves = pec.PlayerValidMoves
 	} else {
-		// Minimizing player (opponent)
-		opponent := game.GetOtherPlayer(g.Players, player.Color)
-		moves = game.ValidMoves(node, opponent.Color)
+		moves = pec.OpponentValidMoves
 	}
 
 	// If no valid moves, pass turn
@@ -126,11 +124,10 @@ func MMAB(g game.Game, node game.Board, player game.Player, depth int, max bool,
 	} else {
 		// Minimizing player (opponent)
 		bestScore := 1<<31 - 1
-		opponent := game.GetOtherPlayer(g.Players, player.Color)
 
 		for _, move := range moves {
 			// Create new board with this move
-			newNode, _ := game.GetNewBoardAfterMove(node, move, opponent)
+			newNode, _ := game.GetNewBoardAfterMove(node, move, pec.Opponent)
 
 			// Recursive evaluation
 			score := MMAB(g, newNode, player, depth-1, true, alpha, beta, eval, perfStats)

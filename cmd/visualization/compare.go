@@ -23,8 +23,8 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 	}
 
 	// Create two evaluation functions with different coefficients
-	eval1 := evaluation.NewMixedEvaluationWithCoefficients(coeff1)
-	eval2 := evaluation.NewMixedEvaluationWithCoefficients(coeff2)
+	eval1 := evaluation.NewMixedEvaluation(coeff1)
+	eval2 := evaluation.NewMixedEvaluation(coeff2)
 
 	// Create progress bar
 	bar := progressbar.NewOptions(numGames,

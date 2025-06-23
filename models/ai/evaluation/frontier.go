@@ -14,38 +14,44 @@ func NewFrontierEvaluation() *FrontierEvaluation {
 }
 
 func (e *FrontierEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	opponent := game.GetOtherPlayer(g.Players, player.Color)
+	pec := precomputeEvaluation(g, b, player)
+	return e.PECEvaluate(g, b, pec)
+}
 
-	playerFrontier := countFrontierDiscs(b, player.Color)
-	opponentFrontier := countFrontierDiscs(b, opponent.Color)
-
+func (e *FrontierEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
+	playerFrontier, opponentFrontier := countFrontierDiscs(b, pec.Player.Color, pec.Opponent.Color)
 	return opponentFrontier - playerFrontier
 }
 
-// countFrontierDiscs compte le nombre de pièces frontalières pour un joueur donné
-func countFrontierDiscs(b game.Board, color game.Piece) int {
-	frontierCount := 0
+// countFrontierDiscs compte le nombre de pièces frontalières pour les deux joueurs en une seule passe
+func countFrontierDiscs(b game.Board, playerColor, opponentColor game.Piece) (int, int) {
+	playerFrontier := 0
+	opponentFrontier := 0
 	directions := [][2]int{
 		{-1, 0}, {1, 0}, {0, -1}, {0, 1},
 		{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
 	}
 
-	for i := 0; i < ai.BoardSize; i++ {
-		for j := 0; j < ai.BoardSize; j++ {
-			if b[i][j] == color {
-				// Vérifier si la pièce est adjacente à une case vide
+	for i := range ai.BoardSize {
+		for j := range ai.BoardSize {
+			currentPiece := b[i][j]
+			if currentPiece == playerColor || currentPiece == opponentColor {
 				for _, dir := range directions {
 					dx, dy := dir[0], dir[1]
 					r, c := i+dx, j+dy
 
 					if r >= 0 && r < ai.BoardSize && c >= 0 && c < ai.BoardSize && b[r][c] == game.Empty {
-						frontierCount++
-						break // Une pièce est comptée une seule fois même si elle est adjacente à plusieurs cases vides
+						if currentPiece == playerColor {
+							playerFrontier++
+						} else {
+							opponentFrontier++
+						}
+						break
 					}
 				}
 			}
 		}
 	}
 
-	return frontierCount
+	return playerFrontier, opponentFrontier
 }

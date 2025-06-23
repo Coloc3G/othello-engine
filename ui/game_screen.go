@@ -58,7 +58,7 @@ func NewGameScreen(ui *UI) *GameScreen {
 		maxVisibleMoves: 10, // Number of moves visible in the history panel
 		face:            basicfont.Face7x13,
 		evalHistory:     make([]int, 0),
-		evaluator:       evaluation.NewMixedEvaluationWithCoefficients(evaluation.V4Coeff),
+		evaluator:       evaluation.NewMixedEvaluation(evaluation.V4Coeff),
 		evalChan:        make(chan int, 1),      // Buffered channel for evaluation results
 		depthUpdateChan: make(chan int, 1),      // Buffered channel for depth updates
 		evalCancelChan:  make(chan struct{}, 1), // Buffered channel for cancellation signal

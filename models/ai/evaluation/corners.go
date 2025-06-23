@@ -11,32 +11,40 @@ func NewCornersEvaluation() *CornersEvaluation {
 }
 
 func (e *CornersEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
+	pec := precomputeEvaluation(g, b, player)
+	return e.PECEvaluate(g, b, pec)
+}
+
+func (e *CornersEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
 	playerCorners := 0
 	opponentCorners := 0
-	opponent := game.GetOpponentColor(player.Color)
 
 	// Check each corner
-	if b[0][0] == player.Color {
+	switch b[0][0] {
+	case pec.Player.Color:
 		playerCorners++
-	} else if b[0][0] == opponent {
+	case pec.Opponent.Color:
 		opponentCorners++
 	}
 
-	if b[0][7] == player.Color {
+	switch b[0][7] {
+	case pec.Player.Color:
 		playerCorners++
-	} else if b[0][7] == opponent {
+	case pec.Opponent.Color:
 		opponentCorners++
 	}
 
-	if b[7][0] == player.Color {
+	switch b[7][0] {
+	case pec.Player.Color:
 		playerCorners++
-	} else if b[7][0] == opponent {
+	case pec.Opponent.Color:
 		opponentCorners++
 	}
 
-	if b[7][7] == player.Color {
+	switch b[7][7] {
+	case pec.Player.Color:
 		playerCorners++
-	} else if b[7][7] == opponent {
+	case pec.Opponent.Color:
 		opponentCorners++
 	}
 

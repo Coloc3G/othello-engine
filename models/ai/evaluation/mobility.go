@@ -11,9 +11,10 @@ func NewMobilityEvaluation() *MobilityEvaluation {
 }
 
 func (e *MobilityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	playerMoves := len(game.ValidMoves(b, player.Color))
-	opponent := game.GetOpponentColor(player.Color)
-	opponentMoves := len(game.ValidMoves(b, opponent))
+	pec := precomputeEvaluation(g, b, player)
+	return e.PECEvaluate(g, b, pec)
+}
 
-	return playerMoves - opponentMoves
+func (e *MobilityEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
+	return len(pec.PlayerValidMoves) - len(pec.OpponentValidMoves)
 }

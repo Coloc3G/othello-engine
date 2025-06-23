@@ -43,44 +43,7 @@ type EvaluationCoefficients struct {
 	Name string `json:"name"`
 }
 
-func NewMixedEvaluation() *MixedEvaluation {
-	// Try to load optimized coefficients
-	coeffs, err := LoadCoefficients("optimized_coeffs.json")
-	if err == nil {
-		return &MixedEvaluation{
-			MaterialEvaluation:  NewMaterialEvaluation(),
-			MobilityEvaluation:  NewMobilityEvaluation(),
-			CornersEvaluation:   NewCornersEvaluation(),
-			ParityEvaluation:    NewParityEvaluation(),
-			StabilityEvaluation: NewStabilityEvaluation(),
-			FrontierEvaluation:  NewFrontierEvaluation(),
-			MaterialCoeff:       coeffs.MaterialCoeffs,
-			MobilityCoeff:       coeffs.MobilityCoeffs,
-			CornersCoeff:        coeffs.CornersCoeffs,
-			ParityCoeff:         coeffs.ParityCoeffs,
-			StabilityCoeff:      coeffs.StabilityCoeffs,
-			FrontierCoeff:       coeffs.FrontierCoeffs,
-		}
-	}
-
-	// Fallback to default coefficients
-	return &MixedEvaluation{
-		MaterialEvaluation:  NewMaterialEvaluation(),
-		MobilityEvaluation:  NewMobilityEvaluation(),
-		CornersEvaluation:   NewCornersEvaluation(),
-		ParityEvaluation:    NewParityEvaluation(),
-		StabilityEvaluation: NewStabilityEvaluation(),
-		FrontierEvaluation:  NewFrontierEvaluation(),
-		MaterialCoeff:       []int{0, 10, 500},
-		MobilityCoeff:       []int{50, 20, 100},
-		CornersCoeff:        []int{1000, 1000, 1000},
-		ParityCoeff:         []int{0, 100, 500},
-		StabilityCoeff:      []int{30, 50, 100},
-		FrontierCoeff:       []int{10, 30, 5},
-	}
-}
-
-func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEvaluation {
+func NewMixedEvaluation(coeffs EvaluationCoefficients) *MixedEvaluation {
 	return &MixedEvaluation{
 		MaterialEvaluation:  NewMaterialEvaluation(),
 		MobilityEvaluation:  NewMobilityEvaluation(),
@@ -97,28 +60,37 @@ func NewMixedEvaluationWithCoefficients(coeffs EvaluationCoefficients) *MixedEva
 	}
 }
 
-// Evaluate implements the Evaluation interface for MixedEvaluation
 func (e *MixedEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	black, white := game.CountPieces(b)
-	if (player.Color == game.Black && black == 0) || (player.Color == game.White && white == 0) {
+	pec := precomputeEvaluation(g, b, player)
+	return e.PECEvaluate(g, b, pec)
+}
+
+// Evaluate implements the Evaluation interface for MixedEvaluation
+func (e *MixedEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
+	if pec.PlayerPieces == 0 {
 		return -1000000
 	}
-	if (player.Color == game.Black && white == 0) || (player.Color == game.White && black == 0) {
+	if pec.OpponentPieces == 0 {
 		return 1000000
 	}
-	if game.IsGameFinished(b) && (player.Color == game.Black && black > white) || (player.Color == game.White && white > black) {
-		return 1000000
+	if pec.IsGameOver {
+		if pec.PlayerPieces > pec.OpponentPieces {
+			return 1000000
+		} else if pec.PlayerPieces < pec.OpponentPieces {
+			return -1000000
+		}
+		return 0
 	}
 
 	materialCoeff, mobilityCoeff, cornersCoeff, parityCoeff, stabilityCoeff, frontierCoeff := e.ComputeGamePhaseCoefficients(b)
 
 	// Get all raw evaluation scores without normalization to match CUDA implementation
-	materialScore := e.MaterialEvaluation.Evaluate(g, b, player)
-	mobilityScore := e.MobilityEvaluation.Evaluate(g, b, player)
-	cornersScore := e.CornersEvaluation.Evaluate(g, b, player)
-	parityScore := e.ParityEvaluation.Evaluate(g, b, player)
-	stabilityScore := e.StabilityEvaluation.Evaluate(g, b, player)
-	frontierScore := e.FrontierEvaluation.Evaluate(g, b, player)
+	materialScore := e.MaterialEvaluation.PECEvaluate(g, b, pec)
+	mobilityScore := e.MobilityEvaluation.PECEvaluate(g, b, pec)
+	cornersScore := e.CornersEvaluation.PECEvaluate(g, b, pec)
+	parityScore := e.ParityEvaluation.PECEvaluate(g, b, pec)
+	stabilityScore := e.StabilityEvaluation.PECEvaluate(g, b, pec)
+	frontierScore := e.FrontierEvaluation.PECEvaluate(g, b, pec)
 
 	return materialCoeff*materialScore +
 		mobilityCoeff*mobilityScore +
