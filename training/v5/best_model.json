@@ -1,0 +1,40 @@
+{
+  "coeffs": {
+    "material_coeff": [
+      1,
+      1,
+      13
+    ],
+    "mobility_coeff": [
+      6,
+      1,
+      78
+    ],
+    "corners_coeff": [
+      66,
+      81,
+      100
+    ],
+    "parity_coeff": [
+      29,
+      1,
+      1
+    ],
+    "stability_coeff": [
+      1,
+      9,
+      1
+    ],
+    "frontier_coeff": [
+      58,
+      11,
+      23
+    ],
+    "name": "Model_Gen19"
+  },
+  "generation": 20,
+  "fitness": 74,
+  "wins": 73,
+  "losses": 25,
+  "draws": 2
+}

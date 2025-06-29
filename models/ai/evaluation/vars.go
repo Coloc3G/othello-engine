@@ -47,12 +47,12 @@ var (
 
 	V5Coeff = EvaluationCoefficients{
 		Name:            "V5",
-		MaterialCoeffs:  []int16{1, 1, 11},
-		MobilityCoeffs:  []int16{6, 11, 39},
-		CornersCoeffs:   []int16{100, 100, 100},
-		ParityCoeffs:    []int16{96, 1, 44},
-		StabilityCoeffs: []int16{55, 9, 19},
-		FrontierCoeffs:  []int16{86, 2, 38},
+		MaterialCoeffs:  []int16{1, 1, 13},
+		MobilityCoeffs:  []int16{6, 1, 78},
+		CornersCoeffs:   []int16{66, 81, 100},
+		ParityCoeffs:    []int16{29, 1, 1},
+		StabilityCoeffs: []int16{1, 9, 1},
+		FrontierCoeffs:  []int16{58, 11, 23},
 	}
 
 	Models []EvaluationCoefficients = []EvaluationCoefficients{
