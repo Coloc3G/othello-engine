@@ -35,13 +35,18 @@ func (g *Game) DisplayBoard(board Board) {
 }
 
 // GetNewBoardAfterMove returns a new game state after applying a move
-func GetNewBoardAfterMove(board Board, pos Position, player Player) (Board, bool) {
-	return ApplyMoveToBoard(board, player.Color, pos)
+func GetNewBoardAfterMove(board Board, pos Position, player Piece) (Board, bool) {
+	return ApplyMoveToBoard(board, player, pos)
+}
+
+// GetNewBitBoardAfterMove returns a new bitboard state after applying a move
+func GetNewBitBoardAfterMove(bb BitBoard, pos Position, player Piece) (BitBoard, bool) {
+	return ApplyMoveToBitBoard(bb, player, pos)
 }
 
 // GetNewBoardAfterMoveMethod is a method wrapper for GetNewBoardAfterMove
 func (g *Game) GetNewBoardAfterMoveMethod(pos Position) (Board, bool) {
-	return GetNewBoardAfterMove(g.Board, pos, g.CurrentPlayer)
+	return GetNewBoardAfterMove(g.Board, pos, g.CurrentPlayer.Color)
 }
 
 // CountPieces counts the number of pieces of each color on the board
@@ -62,6 +67,22 @@ func CountPieces(board Board) (int, int) {
 	}
 
 	return blackCount, whiteCount
+}
+
+func CountPiecesBitBoard(bb BitBoard) (int, int) {
+	// Use optimized popcount for maximum performance
+	return popcount(bb.BlackPieces), popcount(bb.WhitePieces)
+}
+
+// popcount returns the number of set bits using Brian Kernighan's algorithm
+// This is much faster than the bit-by-bit approach
+func popcount(x uint64) int {
+	count := 0
+	for x != 0 {
+		count++
+		x &= x - 1 // Clear the lowest set bit
+	}
+	return count
 }
 
 // CountPiecesMethod is a method wrapper for CountPieces

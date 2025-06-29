@@ -1,7 +1,8 @@
 package evaluation
 
 import (
-	"github.com/Coloc3G/othello-engine/models/ai"
+	"math/bits"
+
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
@@ -13,45 +14,50 @@ func NewFrontierEvaluation() *FrontierEvaluation {
 	return &FrontierEvaluation{}
 }
 
-func (e *FrontierEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	pec := precomputeEvaluation(g, b, player)
-	return e.PECEvaluate(g, b, pec)
+func (e *FrontierEvaluation) Evaluate(b game.BitBoard) int16 {
+	pec := PrecomputeEvaluationBitBoard(b)
+	return e.PECEvaluate(b, pec)
 }
 
-func (e *FrontierEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
-	playerFrontier, opponentFrontier := countFrontierDiscs(b, pec.Player.Color, pec.Opponent.Color)
-	return opponentFrontier - playerFrontier
-}
+func (e *FrontierEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputation) int16 {
+	var whiteFrontier, blackFrontier int16
 
-// countFrontierDiscs compte le nombre de pièces frontalières pour les deux joueurs en une seule passe
-func countFrontierDiscs(b game.Board, playerColor, opponentColor game.Piece) (int, int) {
-	playerFrontier := 0
-	opponentFrontier := 0
-	directions := [][2]int{
-		{-1, 0}, {1, 0}, {0, -1}, {0, 1},
-		{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
+	// Get all pieces for both players
+	whitePieces := b.WhitePieces
+	blackPieces := b.BlackPieces
+	emptySquares := ^(whitePieces | blackPieces)
+
+	// Helper function to get adjacent squares with proper boundary checks
+	getAdjacent := func(pieces uint64) uint64 {
+		adjacent := uint64(0)
+
+		// North (up 8)
+		adjacent |= (pieces >> 8)
+		// South (down 8)
+		adjacent |= (pieces << 8)
+		// East (right 1, avoid wrapping from rightmost to leftmost)
+		adjacent |= ((pieces & 0xFEFEFEFEFEFEFEFE) >> 1)
+		// West (left 1, avoid wrapping from leftmost to rightmost)
+		adjacent |= ((pieces & 0x7F7F7F7F7F7F7F7F) << 1)
+		// NorthEast (up 8, right 1)
+		adjacent |= ((pieces & 0xFEFEFEFEFEFEFEFE) >> 9)
+		// NorthWest (up 8, left 1)
+		adjacent |= ((pieces & 0x7F7F7F7F7F7F7F7F) >> 7)
+		// SouthEast (down 8, right 1)
+		adjacent |= ((pieces & 0xFEFEFEFEFEFEFEFE) << 7)
+		// SouthWest (down 8, left 1)
+		adjacent |= ((pieces & 0x7F7F7F7F7F7F7F7F) << 9)
+
+		return adjacent
 	}
 
-	for i := range ai.BoardSize {
-		for j := range ai.BoardSize {
-			currentPiece := b[i][j]
-			if currentPiece == playerColor || currentPiece == opponentColor {
-				for _, dir := range directions {
-					dx, dy := dir[0], dir[1]
-					r, c := i+dx, j+dy
+	// Find frontier pieces: pieces that are adjacent to empty squares
+	emptyAdjacent := getAdjacent(emptySquares)
+	whiteFrontierMask := whitePieces & emptyAdjacent
+	blackFrontierMask := blackPieces & emptyAdjacent
 
-					if r >= 0 && r < ai.BoardSize && c >= 0 && c < ai.BoardSize && b[r][c] == game.Empty {
-						if currentPiece == playerColor {
-							playerFrontier++
-						} else {
-							opponentFrontier++
-						}
-						break
-					}
-				}
-			}
-		}
-	}
-
-	return playerFrontier, opponentFrontier
+	// Count bits
+	whiteFrontier = int16(bits.OnesCount64(whiteFrontierMask))
+	blackFrontier = int16(bits.OnesCount64(blackFrontierMask))
+	return blackFrontier - whiteFrontier
 }

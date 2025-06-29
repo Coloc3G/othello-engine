@@ -7,8 +7,8 @@ import (
 )
 
 // ImprovedMutateArray applies mutations of varying magnitudes to an array of values
-func ImprovedMutateArray(arr []int, minVal, maxVal int) []int {
-	newArr := make([]int, len(arr))
+func ImprovedMutateArray(arr []int16, minVal, maxVal int) []int16 {
+	newArr := make([]int16, len(arr))
 
 	for i, val := range arr {
 		// Copy original value by default
@@ -16,28 +16,28 @@ func ImprovedMutateArray(arr []int, minVal, maxVal int) []int {
 
 		// Completely reroll the value (rare) - helps with exploration
 		if rand.Float64() < RerollRate {
-			newArr[i] = minVal + rand.Intn(maxVal-minVal+1)
+			newArr[i] = int16(minVal + rand.Intn(maxVal-minVal+1))
 			continue
 		}
 
 		// Apply small mutation (common)
 		if rand.Float64() < SmallMutationRate {
 			delta := rand.Intn(2*SmallDeltaMax+1) - SmallDeltaMax
-			newArr[i] = AdjustValueInRange(val+delta, minVal, maxVal)
+			newArr[i] = int16(AdjustValueInRange(int(val)+delta, minVal, maxVal))
 			continue
 		}
 
 		// Apply medium mutation (occasional)
 		if rand.Float64() < MediumMutationRate {
 			delta := rand.Intn(2*MediumDeltaMax+1) - MediumDeltaMax
-			newArr[i] = AdjustValueInRange(val+delta, minVal, maxVal)
+			newArr[i] = int16(AdjustValueInRange(int(val)+delta, minVal, maxVal))
 			continue
 		}
 
 		// Apply large mutation (rare)
 		if rand.Float64() < LargeMutationRate {
 			delta := rand.Intn(2*LargeDeltaMax+1) - LargeDeltaMax
-			newArr[i] = AdjustValueInRange(val+delta, minVal, maxVal)
+			newArr[i] = int16(AdjustValueInRange(int(val)+delta, minVal, maxVal))
 		}
 	}
 
@@ -86,20 +86,20 @@ func CreateDiverseModel(baseModel EvaluationModel) EvaluationModel {
 	// Apply factors to all coefficients with bounds checking
 	for i := 0; i < 3; i++ {
 		// Apply the scaling factors with sensible minimum values
-		newModel.Coeffs.MaterialCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MaterialCoeffs[i])*materialFactor))
-		newModel.Coeffs.MobilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.MobilityCoeffs[i])*mobilityFactor))
-		newModel.Coeffs.CornersCoeffs[i] = max(1, int(float64(baseModel.Coeffs.CornersCoeffs[i])*cornersFactor))
-		newModel.Coeffs.ParityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.ParityCoeffs[i])*parityFactor))
-		newModel.Coeffs.StabilityCoeffs[i] = max(1, int(float64(baseModel.Coeffs.StabilityCoeffs[i])*stabilityFactor))
-		newModel.Coeffs.FrontierCoeffs[i] = max(1, int(float64(baseModel.Coeffs.FrontierCoeffs[i])*frontierFactor))
+		newModel.Coeffs.MaterialCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.MaterialCoeffs[i])*materialFactor)))
+		newModel.Coeffs.MobilityCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.MobilityCoeffs[i])*mobilityFactor)))
+		newModel.Coeffs.CornersCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.CornersCoeffs[i])*cornersFactor)))
+		newModel.Coeffs.ParityCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.ParityCoeffs[i])*parityFactor)))
+		newModel.Coeffs.StabilityCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.StabilityCoeffs[i])*stabilityFactor)))
+		newModel.Coeffs.FrontierCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.FrontierCoeffs[i])*frontierFactor)))
 
 		// Apply maximum caps to avoid extreme values
-		newModel.Coeffs.MaterialCoeffs[i] = min(newModel.Coeffs.MaterialCoeffs[i], MaterialMax)
-		newModel.Coeffs.MobilityCoeffs[i] = min(newModel.Coeffs.MobilityCoeffs[i], MobilityMax)
-		newModel.Coeffs.CornersCoeffs[i] = min(newModel.Coeffs.CornersCoeffs[i], CornersMax)
-		newModel.Coeffs.ParityCoeffs[i] = min(newModel.Coeffs.ParityCoeffs[i], ParityMax)
-		newModel.Coeffs.StabilityCoeffs[i] = min(newModel.Coeffs.StabilityCoeffs[i], StabilityMax)
-		newModel.Coeffs.FrontierCoeffs[i] = min(newModel.Coeffs.FrontierCoeffs[i], FrontierMax)
+		newModel.Coeffs.MaterialCoeffs[i] = int16(min(int(newModel.Coeffs.MaterialCoeffs[i]), MaterialMax))
+		newModel.Coeffs.MobilityCoeffs[i] = int16(min(int(newModel.Coeffs.MobilityCoeffs[i]), MobilityMax))
+		newModel.Coeffs.CornersCoeffs[i] = int16(min(int(newModel.Coeffs.CornersCoeffs[i]), CornersMax))
+		newModel.Coeffs.ParityCoeffs[i] = int16(min(int(newModel.Coeffs.ParityCoeffs[i]), ParityMax))
+		newModel.Coeffs.StabilityCoeffs[i] = int16(min(int(newModel.Coeffs.StabilityCoeffs[i]), StabilityMax))
+		newModel.Coeffs.FrontierCoeffs[i] = int16(min(int(newModel.Coeffs.FrontierCoeffs[i]), FrontierMax))
 	}
 
 	return newModel

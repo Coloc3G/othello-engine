@@ -13,7 +13,7 @@ type Trainer struct {
 }
 
 // NewTrainer creates a new trainer with default parameters
-func NewTrainer(popSize, numGames, depth int, baseModelCoeffs evaluation.EvaluationCoefficients) *Trainer {
+func NewTrainer(popSize, numGames int, depth int8, baseModelCoeffs evaluation.EvaluationCoefficients) *Trainer {
 	return &Trainer{
 		BaseTrainer: NewBaseTrainer(popSize, numGames, depth, baseModelCoeffs),
 	}
@@ -57,7 +57,7 @@ func (t *Trainer) StartTraining(generations int) {
 		evalStartTime := time.Now()
 		t.evaluatePopulation()
 		evalTime := time.Since(evalStartTime)
-		t.Stats.RecordOperation("evaluation", evalTime)
+		t.Stats.RecordOperation("evaluation", evalTime, "")
 
 		// Sort models by fitness
 		t.sortModelsByFitness()
@@ -101,7 +101,7 @@ func (t *Trainer) StartTraining(generations int) {
 		}
 
 		genTime := time.Since(genStartTime)
-		t.Stats.RecordOperation("generation", genTime)
+		t.Stats.RecordOperation("generation", genTime, "")
 	}
 
 	fmt.Println("\nTraining completed!")

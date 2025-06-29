@@ -13,6 +13,17 @@ func IsGameFinished(board Board) bool {
 	return len(blackMoves) == 0 && len(whiteMoves) == 0
 }
 
+func IsGameFinishedBitBoard(bb BitBoard) bool {
+	// Check if black player has valid moves
+	blackMoves := ValidMovesBitBoard(bb, Black)
+
+	// Check if white player has valid moves
+	whiteMoves := ValidMovesBitBoard(bb, White)
+
+	// Game is finished if neither player has valid moves
+	return len(blackMoves) == 0 && len(whiteMoves) == 0
+}
+
 // IsGameFinishedMethod is a method wrapper for IsGameFinished
 func (g *Game) IsGameFinishedMethod() bool {
 	return IsGameFinished(g.Board)

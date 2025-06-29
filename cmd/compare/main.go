@@ -87,7 +87,7 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 		// Apply the move
 		g.ApplyMove(move)
 		if !game.HasAnyMoves(g.Board, g.CurrentPlayer.Color) {
-			g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+			g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 		}
 	}
 	return
@@ -117,7 +117,7 @@ func playMatch(model1, model2 *Model, open []game.Position) game.Piece {
 			pos := utils.AlgebraicToPosition(move)
 			ok := g.ApplyMove(pos)
 			if !ok {
-				println("❌ Invalid move received from model:", move)
+				println("❌ Invalid move received from model:", move, "(", currentModel.cmd.Path, ")", "path:", utils.PositionsToAlgebraic(g.History), "color:", g.CurrentPlayer.Color)
 				return g.GetOtherPlayerMethod().Color
 			}
 		} else {
@@ -125,6 +125,8 @@ func playMatch(model1, model2 *Model, open []game.Position) game.Piece {
 		}
 
 	}
+
+	fmt.Printf("Game finished! %s vs %s : %s\n", model1.cmd.Path, model2.cmd.Path, utils.PositionsToAlgebraic(g.History))
 
 	// Determine winner
 	winner := g.GetWinnerMethod()

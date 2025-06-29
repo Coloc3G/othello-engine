@@ -14,6 +14,7 @@ import (
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/game"
+	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
 // MoveRecord represents a single move made by a player
@@ -182,7 +183,7 @@ func (s *GameScreen) Update() error {
 		if currentTime.Sub(s.ui.aivsAiTimer) >= s.ui.aivsAiMoveDelay {
 			// Time to make another AI move
 			eval := s.evaluator
-			pos, _ := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
+			pos, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
 
 			// Apply move and update evaluation
 			if s.ui.game.ApplyMove(pos) {
@@ -223,7 +224,7 @@ func (s *GameScreen) Update() error {
 	} else if s.ui.game.CurrentPlayer.Name != "Human" {
 		// Handle AI move
 		eval := s.evaluator
-		pos, _ := evaluation.Solve(*s.ui.game, s.ui.game.CurrentPlayer, 5, eval)
+		pos, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
 
 		// Apply move and update evaluation
 		if s.ui.game.ApplyMove(pos) {
@@ -589,14 +590,13 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 
 			// Perform evaluation at current depth
 			evalScore := evaluation.MMAB(
-				gameCopy,
-				gameCopy.Board,
-				player,
-				depth,   // current progressive depth
-				true,    // maximizing
-				-1<<31,  // alpha
-				1<<31-1, // beta
+				utils.BoardToBits(gameCopy.Board),
+				player.Color,
+				int8(depth),
+				evaluation.MIN_EVAL, // alpha
+				evaluation.MAX_EVAL, // beta
 				s.evaluator,
+				nil,
 				nil) // Pass nil for performance stats since we don't track them in the UI
 
 			// Check again if we should cancel before sending result
@@ -606,7 +606,7 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 			default:
 				// Send the result
 				select {
-				case s.evalChan <- evalScore:
+				case s.evalChan <- int(evalScore):
 					// Successfully sent
 				default:
 					// Channel full, clear it and send new value
@@ -615,7 +615,7 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 					default:
 						// Channel was already empty
 					}
-					s.evalChan <- evalScore
+					s.evalChan <- int(evalScore)
 				}
 			}
 

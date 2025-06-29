@@ -5,6 +5,8 @@ import time
 import subprocess
 import threading
 import os
+import sys
+import select
 from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
@@ -26,13 +28,171 @@ log_level = getattr(logging, LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+class ProcessHandler:
+    """Classe similaire à pwntools pour gérer les processus avec des pipes robustes"""
+    
+    def __init__(self, binary_path, timeout=5.0):
+        self.binary_path = binary_path
+        self.timeout = timeout
+        self.process = None
+        self.is_alive = False
+        
+    def start(self):
+        """Démarre le processus"""
+        try:
+            self.process = subprocess.Popen(
+                [self.binary_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=0,  # Pas de buffer
+                universal_newlines=True
+            )
+            self.is_alive = True
+            logger.info(f"Processus démarré : {self.binary_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Erreur lors du démarrage du processus : {e}")
+            self.is_alive = False
+            return False
+    
+    def send(self, data):
+        """Envoie des données au processus"""
+        if not self.is_alive or not self.process:
+            raise RuntimeError("Le processus n'est pas démarré")
+        
+        try:
+            if not data.endswith('\n'):
+                data += '\n'
+            
+            self.process.stdin.write(data)
+            self.process.stdin.flush()
+            logger.debug(f"Données envoyées : {data.strip()}")
+            
+        except (BrokenPipeError, OSError) as e:
+            logger.error(f"Erreur lors de l'envoi : {e}")
+            self.is_alive = False
+            raise
+    
+    def recv(self, timeout=None):
+        """Reçoit des données du processus avec timeout"""
+        if not self.is_alive or not self.process:
+            raise RuntimeError("Le processus n'est pas démarré")
+        
+        if timeout is None:
+            timeout = self.timeout
+        
+        try:
+            if sys.platform == "win32":
+                # Sur Windows, utiliser une approche simple avec readline et threading
+                import queue
+                import threading
+                
+                result_queue = queue.Queue()
+                
+                def read_line():
+                    try:
+                        line = self.process.stdout.readline()
+                        result_queue.put(('success', line))
+                    except Exception as e:
+                        result_queue.put(('error', str(e)))
+                
+                # Démarrer le thread de lecture
+                read_thread = threading.Thread(target=read_line)
+                read_thread.daemon = True
+                read_thread.start()
+                
+                # Attendre le résultat avec timeout
+                try:
+                    status, data = result_queue.get(timeout=timeout)
+                    if status == 'success':
+                        if data:
+                            logger.debug(f"Données reçues : {data.strip()}")
+                            return data.strip()
+                        else:
+                            raise RuntimeError("Le processus s'est fermé")
+                    else:
+                        raise RuntimeError(f"Erreur de lecture : {data}")
+                except queue.Empty:
+                    raise TimeoutError("Timeout lors de la réception")
+                    
+            else:
+                # Sur Unix, utiliser select
+                ready, _, _ = select.select([self.process.stdout], [], [], timeout)
+                if ready:
+                    data = self.process.stdout.readline()
+                    if data:
+                        logger.debug(f"Données reçues : {data.strip()}")
+                        return data.strip()
+                    else:
+                        raise RuntimeError("Le processus s'est fermé")
+                else:
+                    raise TimeoutError("Timeout lors de la réception")
+                    
+        except Exception as e:
+            logger.error(f"Erreur lors de la réception : {e}")
+            if isinstance(e, (BrokenPipeError, OSError)):
+                self.is_alive = False
+            raise
+    
+    def sendline(self, data):
+        """Envoie une ligne de données"""
+        self.send(data + '\n' if not data.endswith('\n') else data)
+    
+    def recvline(self, timeout=None):
+        """Reçoit une ligne de données"""
+        return self.recv(timeout)
+    
+    def interactive(self, data):
+        """Envoie des données et attend une réponse"""
+        self.send(data)
+        return self.recv()
+    
+    def check_alive(self):
+        """Vérifie si le processus est toujours vivant"""
+        if self.process:
+            poll_result = self.process.poll()
+            if poll_result is not None:
+                self.is_alive = False
+                logger.warning(f"Le processus s'est arrêté avec le code : {poll_result}")
+            return poll_result is None
+        return False
+    
+    def kill(self):
+        """Tue le processus"""
+        if self.process:
+            try:
+                self.process.terminate()
+                self.process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
+            finally:
+                self.is_alive = False
+                logger.info("Processus arrêté")
+    
+    def restart(self):
+        """Redémarre le processus"""
+        logger.info("Redémarrage du processus...")
+        self.kill()
+        time.sleep(1)  # Petit délai avant redémarrage
+        return self.start()
+    
+    def __enter__(self):
+        self.start()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.kill()
+
 class EothelloBot:
     def __init__(self, binary_path=None):
         self.base_url = "https://www.eothello.com"
         self.session = requests.Session()
         self.binary_path = binary_path
-        self.engine_process = None
-          # Configuration des cookies d'authentification
+        self.engine_handler = None
+        # Configuration des cookies d'authentification
         self.cookies = {
             'authentication': AUTH_COOKIE,
         }
@@ -65,38 +225,61 @@ class EothelloBot:
     def start_engine(self):
         """Démarre le moteur d'IA en tant que processus séparé"""
         try:
-            self.engine_process = subprocess.Popen(
-                [self.binary_path],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
-            logger.info(f"Moteur d'IA démarré : {self.binary_path}")
-            return True
+            self.engine_handler = ProcessHandler(self.binary_path, timeout=10.0)
+            if self.engine_handler.start():
+                logger.info(f"Moteur d'IA démarré : {self.binary_path}")
+                return True
+            else:
+                return False
         except Exception as e:
             logger.error(f"Erreur lors du démarrage du moteur : {e}")
             return False
     
     def get_ai_move(self, position):
         """Envoie la position au moteur et récupère le coup suggéré"""
-        if not self.engine_process:
+        if not self.engine_handler or not self.engine_handler.is_alive:
             logger.error("Le moteur d'IA n'est pas démarré")
             return None
             
         try:
-            # Envoyer la position au moteur
-            self.engine_process.stdout.read(7)
-            self.engine_process.stdin.write(f"{position}\n")
-            self.engine_process.stdin.flush()
+            # Vérifier que le processus est toujours vivant
+            if not self.engine_handler.check_alive():
+                logger.warning("Le moteur d'IA s'est arrêté, tentative de redémarrage...")
+                if not self.engine_handler.restart():
+                    logger.error("Impossible de redémarrer le moteur d'IA")
+                    return None
             
-            # Lire la réponse
-            move = self.engine_process.stdout.readline().strip()
-            return move
+            # Envoyer la position au moteur et recevoir la réponse
+            logger.debug(f"Envoi de la position au moteur : {position}")
+            
+            # Utiliser la méthode interactive pour envoyer et recevoir
+            move = self.engine_handler.interactive(position)
+            
+            if move:
+                move = move.replace('Board > ', '')
+                if len(move) != 2:
+                    return None
+                logger.debug(f"Coup reçu du moteur : {move}")
+                return move
+            else:
+                logger.warning("Aucun coup reçu du moteur")
+                return None
+                
+        except TimeoutError:
+            logger.error("Timeout lors de la communication avec le moteur")
+            # Tenter un redémarrage en cas de timeout
+            try:
+                self.engine_handler.restart()
+            except:
+                pass
+            return None
         except Exception as e:
             logger.error(f"Erreur lors de la communication avec le moteur : {e}")
+            # Tenter un redémarrage en cas d'erreur critique
+            try:
+                self.engine_handler.restart()
+            except:
+                pass
             return None
     
     def fetch_current_games(self):
@@ -344,8 +527,8 @@ class EothelloBot:
     
     def cleanup(self):
         """Nettoie les ressources"""
-        if self.engine_process:
-            self.engine_process.terminate()
+        if self.engine_handler:
+            self.engine_handler.kill()
             logger.info("Moteur d'IA arrêté")
 
 def main():

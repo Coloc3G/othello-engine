@@ -10,11 +10,11 @@ func NewMaterialEvaluation() *MaterialEvaluation {
 	return &MaterialEvaluation{}
 }
 
-func (e *MaterialEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	pec := precomputeEvaluation(g, b, player)
-	return e.PECEvaluate(g, b, pec)
+func (e *MaterialEvaluation) Evaluate(b game.BitBoard) int16 {
+	pec := PrecomputeEvaluationBitBoard(b)
+	return e.PECEvaluate(b, pec)
 }
 
-func (e *MaterialEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
-	return pec.PlayerPieces - pec.OpponentPieces
+func (e *MaterialEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputation) int16 {
+	return pec.WhitePieces - pec.BlackPieces
 }

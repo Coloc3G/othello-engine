@@ -13,7 +13,7 @@ import (
 )
 
 // CompareCoefficients compares two sets of evaluation coefficients concurrently
-func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGames, searchDepth int) PerformanceResult {
+func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGames int, searchDepth int8) PerformanceResult {
 
 	// Create stats object
 	stats := PerformanceResult{
@@ -80,7 +80,7 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 
 						// Apply the move
 						g.Board, _ = game.ApplyMoveToBoard(g.Board, g.CurrentPlayer.Color, pos)
-						g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+						g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 					}
 				}
 
@@ -111,11 +111,11 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 					validMoves := game.ValidMoves(g.Board, g.CurrentPlayer.Color)
 					if len(validMoves) > 0 {
 						// Get the best move using minimax search
-						pos, _ := evaluation.Solve(*g, g.CurrentPlayer, searchDepth, currentEval)
+						pos, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, searchDepth, currentEval)
 						g.ApplyMove(pos)
 					} else {
 						// Skip turn if no valid moves
-						g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+						g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 					}
 
 					// Check if game is over
@@ -191,9 +191,9 @@ func PrintComparison(stats PerformanceResult) {
 	fmt.Println("===========================")
 }
 
-func CompareVersions(numGames, searchDepth int) (results []PerformanceResult) {
+func CompareVersions(numGames int, searchDepth int8) (results []PerformanceResult) {
 
-	stats := CompareCoefficients(evaluation.V4Coeff, evaluation.V1Coeff, numGames, searchDepth)
+	stats := CompareCoefficients(evaluation.V4Coeff, evaluation.V5Coeff, numGames, searchDepth)
 	results = append(results, stats)
 
 	return

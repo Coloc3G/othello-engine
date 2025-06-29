@@ -3,17 +3,17 @@ package learning
 // Constants for coefficient ranges - keep these
 const (
 	MaterialMin  = 1
-	MaterialMax  = 1000
+	MaterialMax  = 100
 	MobilityMin  = 1
-	MobilityMax  = 1000
+	MobilityMax  = 100
 	CornersMin   = 1
-	CornersMax   = 1000
+	CornersMax   = 100
 	ParityMin    = 1
-	ParityMax    = 1000
+	ParityMax    = 100
 	StabilityMin = 1
-	StabilityMax = 1000
+	StabilityMax = 100
 	FrontierMin  = 1
-	FrontierMax  = 1000
+	FrontierMax  = 100
 )
 
 // New improved mutation parameters

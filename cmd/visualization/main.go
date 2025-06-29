@@ -28,17 +28,19 @@ type PerformanceResult struct {
 
 func main() {
 	// Parse command line flags
-	numGames := flag.Int("games", 100, "Number of games to run for each comparison")
+	numGames := flag.Int("games", 200, "Number of games to run for each comparison")
 	searchDepth := flag.Int("depth", 5, "Search depth for AI")
-	generateHTML := flag.Bool("html", true, "Generate HTML visualization files")
+	generateHTML := flag.Bool("html", false, "Generate HTML visualization files")
 	showASCII := flag.Bool("ascii", true, "Show ASCII visualization in terminal")
 	flag.Parse()
 
+	searchDepth8 := int8(*searchDepth)
+
 	fmt.Println("Othello AI Performance Visualization")
-	fmt.Printf("Running with %d games at depth %d\n", *numGames, *searchDepth)
+	fmt.Printf("Running with %d games at depth %d\n", *numGames, searchDepth8)
 
 	// Run all comparisons and generate results
-	results := runAllComparisons(*numGames, *searchDepth)
+	results := runAllComparisons(*numGames, searchDepth8)
 
 	// Create visualizations
 	if *generateHTML {
@@ -51,7 +53,7 @@ func main() {
 }
 
 // runAllComparisons runs all comparisons and returns results
-func runAllComparisons(numGames, searchDepth int) []PerformanceResult {
+func runAllComparisons(numGames int, searchDepth int8) []PerformanceResult {
 	// Compare V1 vs V2
 	fmt.Println("Comparing V1 vs V2...")
 	results := CompareVersions(numGames, searchDepth)

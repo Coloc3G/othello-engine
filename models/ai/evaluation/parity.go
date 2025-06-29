@@ -12,31 +12,13 @@ func NewParityEvaluation() *ParityEvaluation {
 	return &ParityEvaluation{}
 }
 
-func (e *ParityEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	pec := precomputeEvaluation(g, b, player)
-	return e.PECEvaluate(g, b, pec)
+func (e *ParityEvaluation) Evaluate(b game.BitBoard) int16 {
+	pec := PrecomputeEvaluationBitBoard(b)
+	return e.PECEvaluate(b, pec)
 }
 
-// Evaluate computes the parity score
-func (e *ParityEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
+func (e *ParityEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputation) int16 {
 	// Count empty squares
-	emptyCount := ai.BoardSize*ai.BoardSize - pec.PlayerPieces - pec.OpponentPieces
-
-	// Determine parity advantage based on player color and empty square count
-	switch emptyCount % 2 {
-	case 0:
-		switch pec.Player.Color {
-		case game.Black:
-			return -1
-		default:
-			return 1
-		}
-	default:
-		switch pec.Player.Color {
-		case game.Black:
-			return 1
-		default:
-			return -1
-		}
-	}
+	emptyCount := ai.BoardSize*ai.BoardSize - pec.WhitePieces - pec.BlackPieces
+	return -((emptyCount%2)*2 - 1)
 }

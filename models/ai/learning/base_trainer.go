@@ -20,12 +20,12 @@ type BaseTrainer struct {
 	PopulationSize int
 	MutationRate   float64
 	NumGames       int
-	MaxDepth       int
+	MaxDepth       int8
 	Stats          *stats.PerformanceStats
 }
 
 // NewBaseTrainer creates a new base trainer
-func NewBaseTrainer(popSize, numGames, depth int, baseModelCoeffs evaluation.EvaluationCoefficients) *BaseTrainer {
+func NewBaseTrainer(popSize, numGames int, depth int8, baseModelCoeffs evaluation.EvaluationCoefficients) *BaseTrainer {
 	return &BaseTrainer{
 		Models:         make([]EvaluationModel, 0),
 		BaseModel:      baseModelCoeffs,
@@ -60,7 +60,7 @@ func (t *BaseTrainer) createNextGeneration() {
 		child := t.crossover(parent1, parent2)
 
 		crossoverTime := time.Since(crossoverStart)
-		t.Stats.RecordOperation("crossover", crossoverTime)
+		t.Stats.RecordOperation("crossover", crossoverTime, "")
 
 		mutationStart := time.Now()
 
@@ -69,7 +69,7 @@ func (t *BaseTrainer) createNextGeneration() {
 		child.Generation = t.Generation + 1
 
 		mutationTime := time.Since(mutationStart)
-		t.Stats.RecordOperation("mutation", mutationTime)
+		t.Stats.RecordOperation("mutation", mutationTime, "")
 
 		newModels[i] = child
 	}
@@ -77,7 +77,7 @@ func (t *BaseTrainer) createNextGeneration() {
 	t.Models = newModels
 
 	totalTime := time.Since(startTime)
-	t.Stats.RecordOperation("generation_creation", totalTime)
+	t.Stats.RecordOperation("generation_creation", totalTime, "")
 }
 
 // tournamentSelect selects a model using tournament selection
@@ -100,12 +100,12 @@ func (t *BaseTrainer) tournamentSelect(tournamentSize int) EvaluationModel {
 func (t *BaseTrainer) crossover(parent1, parent2 EvaluationModel) EvaluationModel {
 	child := EvaluationModel{
 		Coeffs: evaluation.EvaluationCoefficients{
-			MaterialCoeffs:  make([]int, 3),
-			MobilityCoeffs:  make([]int, 3),
-			CornersCoeffs:   make([]int, 3),
-			ParityCoeffs:    make([]int, 3),
-			StabilityCoeffs: make([]int, 3),
-			FrontierCoeffs:  make([]int, 3),
+			MaterialCoeffs:  make([]int16, 3),
+			MobilityCoeffs:  make([]int16, 3),
+			CornersCoeffs:   make([]int16, 3),
+			ParityCoeffs:    make([]int16, 3),
+			StabilityCoeffs: make([]int16, 3),
+			FrontierCoeffs:  make([]int16, 3),
 		},
 	}
 
@@ -201,15 +201,12 @@ func (t *BaseTrainer) SaveGenerationStats(gen int) error {
 			MutationTimeMs   int `json:"mutation_time_ms"`
 			TotalTimeMs      int `json:"total_time_ms"`
 		} `json:"performance"`
-		Stats       map[string]int    `json:"stats_counts"`
-		TimingStats map[string]string `json:"timing_stats"`
 	}{
 		Generation:  gen,
 		BestFitness: t.Models[0].Fitness,
 		BestModel:   t.Models[0],
 		AllModels:   t.Models,
 		Timestamp:   time.Now().Format(time.RFC3339),
-		Stats:       t.Stats.Counts,
 	}
 
 	// Calculate average fitness
@@ -218,19 +215,6 @@ func (t *BaseTrainer) SaveGenerationStats(gen int) error {
 		sum += model.Fitness
 	}
 	stats.AvgFitness = sum / float64(len(t.Models))
-
-	// Add performance statistics
-	stats.PerformanceLog.EvaluationTimeMs = int(t.Stats.EvaluationTime.Milliseconds())
-	stats.PerformanceLog.TournamentTimeMs = int(t.Stats.TournamentTime.Milliseconds())
-	stats.PerformanceLog.CrossoverTimeMs = int(t.Stats.CrossoverTime.Milliseconds())
-	stats.PerformanceLog.MutationTimeMs = int(t.Stats.MutationTime.Milliseconds())
-	stats.PerformanceLog.TotalTimeMs = int(t.Stats.TotalGenerationTime.Milliseconds())
-
-	// Add detailed timing stats
-	stats.TimingStats = make(map[string]string)
-	for opName, duration := range t.Stats.OpTimes {
-		stats.TimingStats[opName] = duration.String()
-	}
 
 	data, err := json.MarshalIndent(stats, "", "  ")
 	if err != nil {

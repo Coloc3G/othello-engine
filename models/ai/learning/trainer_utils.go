@@ -3,7 +3,6 @@ package learning
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 	"github.com/Coloc3G/othello-engine/models/ai/stats"
@@ -18,53 +17,51 @@ import (
 func PlayMatchWithOpening(
 	modelEval, standardEval evaluation.Evaluation,
 	op opening.Opening,
-	playerIndex, maxDepth int) (win, loss, draw bool) {
+	playerIndex int, maxDepth int8) (win, loss, draw bool) {
 	// Create a new game
 	g := game.NewGame("Black", "White")
 	var blackCount, whiteCount int
+	modelColor := game.Black
+	if playerIndex == 1 {
+		modelColor = game.White
+	}
 
 	// Apply opening moves
 	applyOpening(g, op)
 
-	// Determine player model (alternate between games)
-	playerModel := &g.Players[playerIndex]
+	// Play the game
+	gameOver := false
 
-	// Play the game until completion
-	moveCount := 0
-	for !game.IsGameFinished(g.Board) {
-		if len(game.ValidMoves(g.Board, g.CurrentPlayer.Color)) > 0 {
-			var currentEval evaluation.Evaluation
-			if g.CurrentPlayer.Color == playerModel.Color {
-				currentEval = modelEval
-			} else {
-				currentEval = standardEval
-			}
-			pos, _ := evaluation.Solve(*g, g.CurrentPlayer, maxDepth, currentEval)
-			ok := g.ApplyMove(pos)
-			if !ok {
-				if g.CurrentPlayer.Color == playerModel.Color {
-					return false, false, true
-				} else {
-					return true, false, false
-				}
-			}
-			moveCount++
+	for !gameOver {
+		// Determine which evaluation to use
+		var currentEval evaluation.Evaluation
+		if g.CurrentPlayer.Color == modelColor {
+			currentEval = modelEval
 		} else {
-			g.CurrentPlayer = g.GetOtherPlayerMethod()
+			currentEval = standardEval
 		}
 
-		// Safety check to prevent infinite games
-		if moveCount > 100 {
-			fmt.Println("WARNING: Game exceeded 100 moves, forcing a draw")
-			return false, false, true
+		// Check if current player has valid moves
+		validMoves := game.ValidMoves(g.Board, g.CurrentPlayer.Color)
+		if len(validMoves) > 0 {
+			// Get the best move using minimax search
+			pos, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, maxDepth, currentEval)
+			g.ApplyMove(pos)
+		} else {
+			// Skip turn if no valid moves
+			g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
+		}
+
+		// Check if game is over
+		if game.IsGameFinished(g.Board) {
+			gameOver = true
 		}
 	}
 
-	// Determine winner
 	blackCount, whiteCount = game.CountPieces(g.Board)
 
 	// Return result from model's perspective
-	if playerModel.Color == game.Black {
+	if modelColor == game.Black {
 		if blackCount > whiteCount {
 			return true, false, false // Win
 		} else if blackCount < whiteCount {
@@ -111,14 +108,14 @@ func applyOpening(g *game.Game, op opening.Opening) {
 		move := utils.AlgebraicToPosition(transcript[i : i+2])
 
 		// Apply the move
-		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer)
-		g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer.Color)
+		g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 	}
 }
 
 // crossoverCoefficients performs crossover on a specific coefficient array
-func crossoverCoefficients(parent1, parent2 []int, pattern []bool) []int {
-	result := make([]int, len(parent1))
+func crossoverCoefficients(parent1, parent2 []int16, pattern []bool) []int16 {
+	result := make([]int16, len(parent1))
 	for i := range parent1 {
 		if pattern[i%len(pattern)] {
 			result[i] = parent1[i]
@@ -146,7 +143,7 @@ func SelectRandomOpenings(numGames int) []opening.Opening {
 func evaluateModelsInParallel(
 	models []*EvaluationModel,
 	baseModel evaluation.EvaluationCoefficients,
-	maxDepth int,
+	maxDepth int8,
 	numGames int,
 	s *stats.PerformanceStats) {
 
@@ -173,27 +170,15 @@ func evaluateModelsInParallel(
 		go func(modelIdx int, model *EvaluationModel) {
 			defer wg.Done()
 
-			// Create a thread-local copy of performance stats for this goroutine
-			localStats := stats.NewPerformanceStats()
-
 			// Reset statistics
 			model.Wins = 0
 			model.Losses = 0
 			model.Draws = 0
-
-			// Create custom evaluation function
-			startEval := time.Now()
 			evalFunc := evaluation.NewMixedEvaluation(model.Coeffs)
-
-			// Record evaluation creation time
-			evalCreationTime := time.Since(startEval)
-			localStats.RecordOperation("eval_creation", evalCreationTime)
-			localStats.Counts["eval_created"] = 1
 
 			// Play games against standard AI with selected openings
 			for _, op := range selectedOpenings {
 				for playerIdx := range 2 {
-					startMatch := time.Now()
 
 					// Play the match
 					win, loss, draw := PlayMatchWithOpening(
@@ -207,12 +192,6 @@ func evaluateModelsInParallel(
 					} else if draw {
 						model.Draws++
 					}
-
-					// Record match time in local stats
-					matchTime := time.Since(startMatch)
-					localStats.RecordOperation("match", matchTime)
-					localStats.Counts["matches_played"] = 1
-
 					// Update progress bar
 					mutex.Lock()
 					bar.Add(1)
@@ -223,15 +202,6 @@ func evaluateModelsInParallel(
 			// Calculate fitness score
 			model.Fitness = float64(model.Wins) + float64(model.Draws)*0.5
 
-			// Merge local stats into global stats - this requires mutex
-			if s != nil {
-				mutex.Lock()
-				s.RecordOperation("eval_creation", localStats.OpTimes["eval_creation"])
-				s.RecordOperation("match", localStats.OpTimes["match"])
-				s.Counts["eval_created"] += localStats.Counts["eval_created"]
-				s.Counts["matches_played"] += totalMatches / len(models)
-				mutex.Unlock()
-			}
 		}(i, models[i])
 	}
 

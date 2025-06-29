@@ -15,6 +15,11 @@ type Position struct {
 
 type Board [8][8]Piece
 
+type BitBoard struct {
+	BlackPieces uint64
+	WhitePieces uint64
+}
+
 type Player struct {
 	Color Piece
 	Name  string

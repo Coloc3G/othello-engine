@@ -17,10 +17,10 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 			return fmt.Errorf("invalid move %s for player %s", utils.PositionToAlgebraic(move), g.CurrentPlayer.Name)
 		}
 		// Apply the move
-		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer)
-		g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+		g.Board, _ = game.GetNewBoardAfterMove(g.Board, move, g.CurrentPlayer.Color)
+		g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 		if !game.HasAnyMoves(g.Board, g.CurrentPlayer.Color) {
-			g.CurrentPlayer = game.GetOtherPlayer(g.Players, g.CurrentPlayer.Color)
+			g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
 		}
 	}
 	return
@@ -63,7 +63,7 @@ func main() {
 
 		}
 		if !found {
-			move, _ = evaluation.Solve(*g, g.CurrentPlayer, 5, evaluator)
+			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, evaluator)
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))

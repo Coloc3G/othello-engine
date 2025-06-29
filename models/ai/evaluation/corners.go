@@ -10,43 +10,31 @@ func NewCornersEvaluation() *CornersEvaluation {
 	return &CornersEvaluation{}
 }
 
-func (e *CornersEvaluation) Evaluate(g game.Game, b game.Board, player game.Player) int {
-	pec := precomputeEvaluation(g, b, player)
-	return e.PECEvaluate(g, b, pec)
+func (e *CornersEvaluation) Evaluate(b game.BitBoard) int16 {
+	pec := PrecomputeEvaluationBitBoard(b)
+	return e.PECEvaluate(b, pec)
 }
 
-func (e *CornersEvaluation) PECEvaluate(g game.Game, b game.Board, pec PreEvaluationComputation) int {
-	playerCorners := 0
-	opponentCorners := 0
+func (e *CornersEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputation) int16 {
+	var whiteCorners, blackCorners int16
 
-	// Check each corner
-	switch b[0][0] {
-	case pec.Player.Color:
-		playerCorners++
-	case pec.Opponent.Color:
-		opponentCorners++
+	// Define corner positions as bit masks
+	const (
+		topLeft     = uint64(1) << 63
+		topRight    = uint64(1) << 56
+		bottomLeft  = uint64(1) << 7
+		bottomRight = uint64(1) << 0
+	)
+
+	corners := []uint64{topLeft, topRight, bottomLeft, bottomRight}
+
+	for _, corner := range corners {
+		if b.WhitePieces&corner != 0 {
+			whiteCorners++
+		} else if b.BlackPieces&corner != 0 {
+			blackCorners++
+		}
 	}
 
-	switch b[0][7] {
-	case pec.Player.Color:
-		playerCorners++
-	case pec.Opponent.Color:
-		opponentCorners++
-	}
-
-	switch b[7][0] {
-	case pec.Player.Color:
-		playerCorners++
-	case pec.Opponent.Color:
-		opponentCorners++
-	}
-
-	switch b[7][7] {
-	case pec.Player.Color:
-		playerCorners++
-	case pec.Opponent.Color:
-		opponentCorners++
-	}
-
-	return playerCorners - opponentCorners
+	return whiteCorners - blackCorners
 }
