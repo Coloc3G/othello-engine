@@ -59,6 +59,9 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 				if childMoves != nil {
 					bestMoves = append(bestMoves, childMoves...)
 				}
+				if bestScore == MAX_EVAL {
+					return bestMoves, bestScore
+				}
 			}
 
 			if childScore > alpha {
@@ -71,6 +74,9 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 				bestMoves = []game.Position{move}
 				if childMoves != nil {
 					bestMoves = append(bestMoves, childMoves...)
+				}
+				if bestScore == MIN_EVAL {
+					return bestMoves, bestScore
 				}
 			}
 
@@ -187,6 +193,9 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				if childMoves != nil {
 					bestMoves = append(bestMoves, childMoves...)
 				}
+				if bestScore == MAX_EVAL {
+					return bestScore, bestMoves
+				}
 			}
 
 			// Update alpha for pruning
@@ -234,6 +243,9 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				bestMoves = []game.Position{move}
 				if childMoves != nil {
 					bestMoves = append(bestMoves, childMoves...)
+				}
+				if bestScore == MIN_EVAL {
+					return bestScore, bestMoves
 				}
 			}
 
