@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"strings"
 
@@ -27,6 +28,10 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 }
 
 func main() {
+
+	debug := flag.Bool("debug", false, "Debug mode")
+	flag.Parse()
+
 	evaluator := evaluation.NewMixedEvaluation(evaluation.Models[len(evaluation.Models)-1]) // Use the latest evaluation model
 
 	for {
@@ -69,12 +74,15 @@ func main() {
 				depth = int8(64 - len(pos))
 			}
 
-			moves, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, depth, evaluator)
+			moves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, depth, evaluator)
 			if len(moves) == 0 || (len(moves) == 1 && moves[0].Row == -1 && moves[0].Col == -1) {
 				fmt.Println("No valid moves found")
 				continue
 			}
 			move = moves[0]
+			if *debug {
+				fmt.Printf("Depth %d (%d move) ; Score %d ; Continuation %s\n", depth, len(pos), score, utils.PositionsToAlgebraic(moves))
+			}
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))

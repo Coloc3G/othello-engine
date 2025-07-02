@@ -191,7 +191,6 @@ class EothelloBot:
         self.base_url = "https://www.eothello.com"
         self.session = requests.Session()
         self.binary_path = binary_path
-        self.engine_handler = None
         # Configuration des cookies d'authentification
         self.cookies = {
             'authentication': AUTH_COOKIE,
@@ -223,63 +222,52 @@ class EothelloBot:
         self.session.cookies.update(self.cookies)
         
     def start_engine(self):
-        """Démarre le moteur d'IA en tant que processus séparé"""
+        """Vérifie que le binaire existe"""
         try:
-            self.engine_handler = ProcessHandler(self.binary_path, timeout=10.0)
-            if self.engine_handler.start():
-                logger.info(f"Moteur d'IA démarré : {self.binary_path}")
-                return True
-            else:
+            if not os.path.exists(self.binary_path):
+                logger.error(f"Le binaire n'existe pas : {self.binary_path}")
                 return False
+            logger.info(f"Moteur d'IA disponible : {self.binary_path}")
+            return True
         except Exception as e:
-            logger.error(f"Erreur lors du démarrage du moteur : {e}")
+            logger.error(f"Erreur lors de la vérification du moteur : {e}")
             return False
     
     def get_ai_move(self, position):
-        """Envoie la position au moteur et récupère le coup suggéré"""
-        if not self.engine_handler or not self.engine_handler.is_alive:
-            logger.error("Le moteur d'IA n'est pas démarré")
+        """Lance un nouveau processus pour obtenir un coup"""
+        if not self.binary_path or not os.path.exists(self.binary_path):
+            logger.error("Le binaire du moteur d'IA n'est pas disponible")
             return None
             
         try:
-            # Vérifier que le processus est toujours vivant
-            if not self.engine_handler.check_alive():
-                logger.warning("Le moteur d'IA s'est arrêté, tentative de redémarrage...")
-                if not self.engine_handler.restart():
-                    logger.error("Impossible de redémarrer le moteur d'IA")
+            # Créer et démarrer un nouveau processus pour chaque coup
+            with ProcessHandler(self.binary_path, timeout=15.0) as engine:
+                if not engine.is_alive:
+                    logger.error("Impossible de démarrer le processus du moteur")
                     return None
-            
-            # Envoyer la position au moteur et recevoir la réponse
-            logger.debug(f"Envoi de la position au moteur : {position}")
-            
-            # Utiliser la méthode interactive pour envoyer et recevoir
-            move = self.engine_handler.interactive(position)
-            
-            if move:
-                move = move.replace('Board > ', '')
-                if len(move) != 2:
-                    return None
-                logger.debug(f"Coup reçu du moteur : {move}")
-                return move
-            else:
-                logger.warning("Aucun coup reçu du moteur")
-                return None
                 
+                # Envoyer la position et récupérer le coup
+                logger.debug(f"Envoi de la position au moteur : {position}")
+                move = engine.interactive(position)
+                
+                if move:
+                    # Nettoyer la réponse
+                    move = move.replace('Board > ', '').strip()
+                    if len(move) == 2 and move.isalnum():
+                        logger.debug(f"Coup reçu du moteur : {move}")
+                        return move
+                    else:
+                        logger.warning(f"Format de coup invalide reçu : '{move}'")
+                        return None
+                else:
+                    logger.warning("Aucun coup reçu du moteur")
+                    return None
+                    
         except TimeoutError:
             logger.error("Timeout lors de la communication avec le moteur")
-            # Tenter un redémarrage en cas de timeout
-            try:
-                self.engine_handler.restart()
-            except:
-                pass
             return None
         except Exception as e:
             logger.error(f"Erreur lors de la communication avec le moteur : {e}")
-            # Tenter un redémarrage en cas d'erreur critique
-            try:
-                self.engine_handler.restart()
-            except:
-                pass
             return None
     
     def fetch_current_games(self):
@@ -304,7 +292,6 @@ class EothelloBot:
                     new_games[game_id] = {'color': None, 'last_move_count': 0}
             
             # Mettre à jour la liste des parties en cours
-            removed_games = set(self.current_games.keys()) - set(new_games.keys())
             added_games = set(new_games.keys()) - set(self.current_games.keys())
             
             if added_games:
@@ -527,17 +514,15 @@ class EothelloBot:
     
     def cleanup(self):
         """Nettoie les ressources"""
-        if self.engine_handler:
-            self.engine_handler.kill()
-            logger.info("Moteur d'IA arrêté")
+        logger.info("Nettoyage des ressources terminé")
 
 def main():
     bot = EothelloBot(BINARY_PATH)
     
     try:
-        # Démarrer le moteur d'IA
+        # Vérifier le moteur d'IA
         if not bot.start_engine():
-            logger.error("Impossible de démarrer le moteur d'IA")
+            logger.error("Impossible d'utiliser le moteur d'IA")
             return
         
         # Commencer la surveillance
