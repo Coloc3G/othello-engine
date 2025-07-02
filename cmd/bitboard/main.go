@@ -13,22 +13,6 @@ import (
 )
 
 func main() {
-
-	board := "c4c3d3c5d6f4b4e3b3a3c2"
-	pos := utils.AlgebraicToPositions(board)
-	g1 := game.NewGame("Black", "White")
-	err := applyPosition(g1, pos)
-	if err != nil {
-		fmt.Println("Error applying position:", err)
-		return
-	}
-	fmt.Println(utils.HashBoard(g1.Board))
-	score := evaluation.NewMixedEvaluation(evaluation.V5Coeff).Evaluate(utils.BoardToBits(g1.Board))
-	fmt.Println("Evaluation score:", score)
-	bestMove, score := evaluation.Solve(g1.Board, g1.CurrentPlayer.Color, 5, evaluation.NewMixedEvaluation(evaluation.V5Coeff))
-	fmt.Printf("Player %d Best move: %s, Score: %d\n", g1.CurrentPlayer.Color, utils.PositionToAlgebraic(bestMove), score)
-
-	return
 	fmt.Println("=== Testing Board and Bitboard Function Matching ===")
 
 	// Test cases: various board states including random ones

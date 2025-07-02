@@ -63,7 +63,18 @@ func main() {
 
 		}
 		if !found {
-			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, evaluator)
+
+			var depth int8 = 7
+			if len(pos) >= 47 {
+				depth = int8(64 - len(pos))
+			}
+
+			moves, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, depth, evaluator)
+			if len(moves) == 0 || (len(moves) == 1 && moves[0].Row == -1 && moves[0].Col == -1) {
+				fmt.Println("No valid moves found")
+				continue
+			}
+			move = moves[0]
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))

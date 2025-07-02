@@ -128,20 +128,12 @@ func PrintComparison(stats PerformanceResult) {
 
 func CompareVersions(numGames int, searchDepth int8) (results []PerformanceResult) {
 
-	// for i := range evaluation.Models {
-	// 	for j := range evaluation.Models {
-	// 		if i >= j {
-	// 			continue // Avoid duplicate comparisons and self-comparisons
-	// 		}
-
-	// 		// Compare each model with every other model
-	// 		res := CompareCoefficients(evaluation.Models[i], evaluation.Models[j], numGames, searchDepth)
-	// 		results = append(results, res)
-	// 	}
-	// }
-
-	res := CompareCoefficients(evaluation.V6Coeff, evaluation.V5Coeff, numGames, searchDepth)
-	results = append(results, res)
+	for _, m := range evaluation.Models {
+		if m.Name != evaluation.Models[len(evaluation.Models)-1].Name { // Skip the latest model
+			result := CompareCoefficients(m, evaluation.Models[len(evaluation.Models)-1], numGames, searchDepth)
+			results = append(results, result)
+		}
+	}
 
 	return
 }

@@ -183,7 +183,14 @@ func (s *GameScreen) Update() error {
 		if currentTime.Sub(s.ui.aivsAiTimer) >= s.ui.aivsAiMoveDelay {
 			// Time to make another AI move
 			eval := s.evaluator
-			pos, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
+			moves, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
+			if len(moves) == 0 || (len(moves) == 1 && moves[0].Row == -1 && moves[0].Col == -1) {
+				// No valid moves found, switch player
+				s.ui.game.CurrentPlayer = s.ui.game.GetOtherPlayerMethod()
+				return nil
+			}
+
+			pos := moves[0]
 
 			// Apply move and update evaluation
 			if s.ui.game.ApplyMove(pos) {
@@ -224,8 +231,14 @@ func (s *GameScreen) Update() error {
 	} else if s.ui.game.CurrentPlayer.Name != "Human" {
 		// Handle AI move
 		eval := s.evaluator
-		pos, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
+		moves, _ := evaluation.Solve(s.ui.game.Board, s.ui.game.CurrentPlayer.Color, 5, eval)
+		if len(moves) == 0 || (len(moves) == 1 && moves[0].Row == -1 && moves[0].Col == -1) {
+			// No valid moves found, switch player
+			s.ui.game.CurrentPlayer = s.ui.game.GetOtherPlayerMethod()
+			return nil
+		}
 
+		pos := moves[0] // Get the best move
 		// Apply move and update evaluation
 		if s.ui.game.ApplyMove(pos) {
 			s.lastMovePos = pos                                           // Update last move position

@@ -17,16 +17,16 @@ type MMABCacheNode struct {
 	RecursiveBlack        map[int8]int16
 }
 
-func Solve(b game.Board, player game.Piece, depth int8, eval Evaluation) (game.Position, int16) {
+func Solve(b game.Board, player game.Piece, depth int8, eval Evaluation) ([]game.Position, int16) {
 	return SolveWithStats(b, player, depth, eval, nil)
 }
 
 // Solve finds the best move for a player using minimax with alpha-beta pruning
-func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation, perfStats *stats.PerformanceStats) (game.Position, int16) {
+func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation, perfStats *stats.PerformanceStats) ([]game.Position, int16) {
 	bb := utils.BoardToBits(b)
 	validMoves := game.ValidMovesBitBoard(bb, player)
 	if len(validMoves) == 0 {
-		return game.Position{Row: -1, Col: -1}, -1
+		return []game.Position{{Row: -1, Col: -1}}, -1
 	}
 
 	// If only one move is available, return it immediately
@@ -34,10 +34,10 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		bestMove := validMoves[0]
 		newBoard, _ := game.GetNewBitBoardAfterMove(bb, bestMove, player)
 		bestScore := eval.Evaluate(newBoard)
-		return bestMove, bestScore
+		return []game.Position{bestMove}, bestScore
 	}
 
-	var bestMove game.Position
+	var bestMoves []game.Position
 	bestScore := MIN_EVAL - 1
 	if player == game.Black {
 		bestScore = MAX_EVAL + 1
@@ -49,13 +49,16 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 
 	for _, move := range validMoves {
 		newBoard, _ := game.GetNewBitBoardAfterMove(bb, move, player)
-		childScore, _ := MMAB(newBoard, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+		childScore, childMoves := MMAB(newBoard, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 
 		if player == game.White {
 			// Maximizing white player
 			if childScore > bestScore {
 				bestScore = childScore
-				bestMove = move
+				bestMoves = []game.Position{move}
+				if childMoves != nil {
+					bestMoves = append(bestMoves, childMoves...)
+				}
 			}
 
 			if childScore > alpha {
@@ -65,7 +68,10 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 			// Minimizing black player
 			if childScore < bestScore {
 				bestScore = childScore
-				bestMove = move
+				bestMoves = []game.Position{move}
+				if childMoves != nil {
+					bestMoves = append(bestMoves, childMoves...)
+				}
 			}
 
 			if childScore < beta {
@@ -74,7 +80,7 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		}
 
 	}
-	return bestMove, bestScore
+	return bestMoves, bestScore
 }
 
 // MMAB performs minimax search with alpha-beta pruning

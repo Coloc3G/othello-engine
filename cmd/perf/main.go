@@ -42,13 +42,21 @@ func main() {
 	eval := evaluation.NewMixedEvaluation(evaluation.V4Coeff)
 	stats := stats.NewPerformanceStats()
 	start := time.Now()
-	bestMove, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, eval)
+	bestMoves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, eval)
+	if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
+		fmt.Println("No valid moves found")
+		return
+	}
 	fmt.Println("Evaluation completed in:", time.Since(start))
-	fmt.Printf("Best move: %s, Score: %d\n", utils.PositionToAlgebraic(bestMove), score)
+	fmt.Printf("Best moves: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
 	start = time.Now()
-	bestMove, score = evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, 7, eval, stats)
+	bestMoves, score = evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, 6, eval, stats)
+	if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
+		fmt.Println("No valid moves found")
+		return
+	}
 	fmt.Println("Evaluation with stats completed in:", time.Since(start))
-	fmt.Printf("Best move: %s, Score: %d\n", utils.PositionToAlgebraic(bestMove), score)
+	fmt.Printf("Best move: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
 	fmt.Printf("Performance stats: \n")
 	for name, op := range stats.Operations {
 		fmt.Printf("Operation: %s, Count: %d, Time: %s\n", name, op.Count, op.Time)
@@ -74,6 +82,8 @@ func main() {
 	}
 
 }
+
+// Depth 6
 
 // Evaluation completed in: 667.1792ms
 // Best move: d7, Score: 129

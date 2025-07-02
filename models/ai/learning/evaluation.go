@@ -43,7 +43,12 @@ func PlayMatchWithOpening(
 		if len(validMoves) > 0 {
 			// Get the best move using minimax search
 			pos, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, maxDepth, currentEval)
-			g.ApplyMove(pos)
+			if len(pos) == 0 || (len(pos) == 1 && pos[0].Row == -1 && pos[0].Col == -1) {
+				// No valid moves found, skip turn
+				g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
+				continue
+			}
+			g.ApplyMove(pos[0])
 		} else {
 			// Skip turn if no valid moves
 			g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
