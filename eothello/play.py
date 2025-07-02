@@ -50,7 +50,7 @@ class ProcessHandler:
                 universal_newlines=True
             )
             self.is_alive = True
-            logger.info(f"Processus démarré : {self.binary_path}")
+            logger.debug(f"Processus démarré : {self.binary_path}")
             return True
         except Exception as e:
             logger.error(f"Erreur lors du démarrage du processus : {e}")
@@ -170,11 +170,11 @@ class ProcessHandler:
                 self.process.wait()
             finally:
                 self.is_alive = False
-                logger.info("Processus arrêté")
+                logger.debug("Processus arrêté")
     
     def restart(self):
         """Redémarre le processus"""
-        logger.info("Redémarrage du processus...")
+        logger.debug("Redémarrage du processus...")
         self.kill()
         time.sleep(1)  # Petit délai avant redémarrage
         return self.start()
@@ -241,7 +241,7 @@ class EothelloBot:
             
         try:
             # Créer et démarrer un nouveau processus pour chaque coup
-            with ProcessHandler(self.binary_path, timeout=15.0) as engine:
+            with ProcessHandler(self.binary_path, timeout=60.0) as engine:
                 if not engine.is_alive:
                     logger.error("Impossible de démarrer le processus du moteur")
                     return None
@@ -257,10 +257,10 @@ class EothelloBot:
                         logger.debug(f"Coup reçu du moteur : {move}")
                         return move
                     else:
-                        logger.warning(f"Format de coup invalide reçu : '{move}'")
+                        logger.debug(f"Format de coup invalide reçu : '{move}'")
                         return None
                 else:
-                    logger.warning("Aucun coup reçu du moteur")
+                    logger.debug("Aucun coup reçu du moteur")
                     return None
                     
         except TimeoutError:
@@ -469,7 +469,7 @@ class EothelloBot:
                     if self.make_move(game_id, ai_move, move_index):
                         self.current_games[game_id]['last_move_count'] = current_move_count + 1
                 else:
-                    logger.error(f"L'IA n'a pas pu suggérer de coup pour la partie {game_id}")
+                    logger.debug(f"L'IA n'a pas pu suggérer de coup pour la partie {game_id}")
             else:
                 # Juste mettre à jour le compteur de coups
                 self.current_games[game_id]['last_move_count'] = current_move_count
