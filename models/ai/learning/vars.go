@@ -20,28 +20,16 @@ const (
 const (
 	// Small random mutations most of the time
 	SmallMutationRate = 0.25
-	SmallDeltaMax     = 25 // Small adjustments
+	SmallDeltaMax     = 15 // Small adjustments
 
 	// Medium mutations occasionally
 	MediumMutationRate = 0.05
-	MediumDeltaMax     = 75 // Medium adjustments
+	MediumDeltaMax     = 35 // Medium adjustments
 
 	// Large mutations rarely (for exploration)
 	LargeMutationRate = 0.02
-	LargeDeltaMax     = 200 // Large adjustments for exploration
+	LargeDeltaMax     = 75 // Large adjustments for exploration
 
 	// Completely new value generation (very rare)
-	RerollRate = 0.01
-)
-
-// Hybrid training parameters
-const (
-	// Seuil minimum de positions pour utiliser le GPU
-	DefaultGPUThreshold = 1000
-
-	// Batch GPU après chaque génération
-	DefaultBatchFrequency = 1
-
-	// Collecte des positions activée par défaut
-	DefaultPositionCollection = true
+	RerollRate = 0.03
 )

@@ -30,7 +30,8 @@ var (
 		Name:            "V3",
 		MaterialCoeffs:  []int16{0, 1, 100},
 		MobilityCoeffs:  []int16{5, 25, 50},
-		CornersCoeffs:   []int16{0, 10, 50},
+		CornersCoeffs:   []int16{100, 100, 100},
+		ParityCoeffs:    []int16{0, 10, 50},
 		StabilityCoeffs: []int16{0, 10, 20},
 		FrontierCoeffs:  []int16{0, 10, 20},
 	}

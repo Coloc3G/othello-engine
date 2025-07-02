@@ -2,50 +2,38 @@ package learning
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
 )
 
-// Trainer manages the training of AI evaluation functions using CPU
-type Trainer struct {
-	*BaseTrainer
-}
-
 // NewTrainer creates a new trainer with default parameters
-func NewTrainer(popSize, numGames int, depth int8, baseModelCoeffs evaluation.EvaluationCoefficients) *Trainer {
+func NewTrainer(name string, popSize, numGames int, depth int8, baseModelCoeffs evaluation.EvaluationCoefficients) *Trainer {
 	return &Trainer{
-		BaseTrainer: NewBaseTrainer(popSize, numGames, depth, baseModelCoeffs),
-	}
-}
-
-// InitializePopulation creates initial random population of models
-func (t *Trainer) InitializePopulation() {
-	t.Models = make([]EvaluationModel, t.PopulationSize)
-
-	// Initialize with a reasonable default model
-	defaultModel := EvaluationModel{
-		Coeffs:     t.BaseModel,
-		Generation: 1,
-	}
-
-	t.Models[0] = defaultModel
-	t.BestModel = defaultModel
-
-	// Create variations of the default model
-	for i := 1; i < t.PopulationSize; i++ {
-		t.Models[i] = t.mutateModel(defaultModel)
-		t.Models[i].Generation = 1
+		Name:           name,
+		Models:         make([]EvaluationModel, 0),
+		BaseModel:      baseModelCoeffs,
+		PopulationSize: popSize,
+		MutationRate:   0.3,
+		NumGames:       numGames,
+		MaxDepth:       depth,
+		Generation:     1,
 	}
 }
 
 // StartTraining begins the genetic algorithm training process
 func (t *Trainer) StartTraining(generations int) {
+
+	if t.createModelDirectory() != nil {
+		fmt.Println("Error creating model directory")
+		return
+	}
+
+	trainingStart := time.Now()
 	if len(t.Models) == 0 {
 		t.InitializePopulation()
 	}
-
-	t.Stats.Reset()
 
 	for gen := 1; gen <= generations; gen++ {
 		genStartTime := time.Now()
@@ -53,14 +41,11 @@ func (t *Trainer) StartTraining(generations int) {
 		t.Generation = gen
 		fmt.Printf("\nGeneration %d/%d\n", gen, generations)
 
-		// Evaluate all models using CPU
-		evalStartTime := time.Now()
+		// Evaluate all models
 		t.evaluatePopulation()
-		evalTime := time.Since(evalStartTime)
-		t.Stats.RecordOperation("evaluation", evalTime, "")
-
-		// Sort models by fitness
 		t.sortModelsByFitness()
+
+		fmt.Println("Generation time:", time.Since(genStartTime))
 
 		// Update best model
 		if t.Models[0].Fitness > t.BestModel.Fitness {
@@ -82,29 +67,62 @@ func (t *Trainer) StartTraining(generations int) {
 		// Save generation statistics
 		t.SaveGenerationStats(gen)
 
-		// Modify this reinforcement section - use gentler reinforcement
-		if gen >= 3 && calculateAverageWins(t.Models) == 0 {
-			fmt.Println("No wins detected. Using more aggressive exploration for this generation.")
-			// Instead of reinforcing the whole population, just increase mutation rates temporarily
-			t.MutationRate += 0.1
-			if t.MutationRate > 0.8 {
-				t.MutationRate = 0.8
-			}
-		} else {
-			// Return to normal mutation rate
-			t.MutationRate = 0.3
-		}
-
 		// Create next generation if not last generation
 		if gen < generations {
 			t.createNextGeneration()
 		}
-
-		genTime := time.Since(genStartTime)
-		t.Stats.RecordOperation("generation", genTime, "")
 	}
 
-	fmt.Println("\nTraining completed!")
+	fmt.Printf("\nTraining completed in %s\n", time.Since(trainingStart))
+}
+
+// InitializePopulation creates initial random population of models
+func (t *Trainer) InitializePopulation() {
+	t.Models = make([]EvaluationModel, t.PopulationSize)
+
+	// Initialize with a reasonable default model
+	defaultModel := EvaluationModel{
+		Coeffs:     t.BaseModel,
+		Generation: 1,
+	}
+
+	t.Models[0] = defaultModel
+	t.BestModel = defaultModel
+
+	// Create variations of the default model
+	for i := 1; i < t.PopulationSize; i++ {
+		t.Models[i] = CreateDiverseModel(defaultModel)
+		t.Models[i].Generation = 1
+	}
+}
+
+// createNextGeneration creates a new generation through selection, crossover and mutation
+func (t *Trainer) createNextGeneration() {
+
+	newModels := make([]EvaluationModel, t.PopulationSize)
+
+	// Increase elitism to preserve more good models
+	eliteCount := t.PopulationSize / 4
+	copy(newModels[:eliteCount], t.Models[:eliteCount])
+
+	// Fill the rest with crossover and mutation
+	for i := eliteCount; i < t.PopulationSize; i++ {
+
+		// Use larger tournament size to focus on better models
+		parent1 := t.tournamentSelect(5)
+		parent2 := t.tournamentSelect(5)
+
+		// Crossover
+		child := t.crossover(parent1, parent2)
+
+		// Mutation
+		child = t.mutateModel(child)
+		child.Generation = t.Generation + 1
+
+		newModels[i] = child
+	}
+
+	t.Models = newModels
 }
 
 // evaluatePopulation evaluates all models by playing games
@@ -116,5 +134,21 @@ func (t *Trainer) evaluatePopulation() {
 	}
 
 	// Evaluate all models in parallel
-	evaluateModelsInParallel(modelPtrs, t.BaseModel, t.MaxDepth, t.NumGames, t.Stats)
+	evaluateModelsInParallel(modelPtrs, t.BaseModel, t.MaxDepth, t.NumGames)
+}
+
+// sortModelsByFitness sorts models by fitness in descending order
+func (t *Trainer) sortModelsByFitness() {
+	sort.Slice(t.Models, func(i, j int) bool {
+		return t.Models[i].Fitness > t.Models[j].Fitness
+	})
+}
+
+// calculateAvgFitness calculates the average fitness of the population
+func (t *Trainer) calculateAvgFitness() float64 {
+	sum := 0.0
+	for _, model := range t.Models {
+		sum += model.Fitness
+	}
+	return sum / float64(len(t.Models))
 }

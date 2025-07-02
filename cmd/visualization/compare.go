@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"runtime"
 	"sync"
 
 	"github.com/Coloc3G/othello-engine/models/ai/evaluation"
-	"github.com/Coloc3G/othello-engine/models/game"
+	"github.com/Coloc3G/othello-engine/models/ai/learning"
 	"github.com/Coloc3G/othello-engine/models/opening"
 	"github.com/schollz/progressbar/v3"
 )
@@ -15,11 +14,14 @@ import (
 // CompareCoefficients compares two sets of evaluation coefficients concurrently
 func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGames int, searchDepth int8) PerformanceResult {
 
+	selectedOpenings := opening.SelectRandomOpenings(numGames)
+	numGames = len(selectedOpenings)
+
 	// Create stats object
 	stats := PerformanceResult{
 		Version1Name: coeff1.Name,
 		Version2Name: coeff2.Name,
-		TotalGames:   numGames,
+		TotalGames:   numGames * 2,
 	}
 
 	// Create two evaluation functions with different coefficients
@@ -27,7 +29,7 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 	eval2 := evaluation.NewMixedEvaluation(coeff2)
 
 	// Create progress bar
-	bar := progressbar.NewOptions(numGames,
+	bar := progressbar.NewOptions(numGames*2,
 		progressbar.OptionSetDescription("Playing games"),
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionShowCount(),
@@ -44,7 +46,7 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 
 	// Set up job and result channels and a worker pool
 	jobsCh := make(chan int, numGames)
-	resultsCh := make(chan int, numGames)
+	resultsCh := make(chan int, numGames*2) // Buffer for all results
 
 	for i := range numGames {
 		jobsCh <- i
@@ -58,111 +60,43 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 		go func() {
 			defer wg.Done()
 			for i := range jobsCh {
-				// Create a new game
-				g := game.NewGame("Model1", "Model2")
-
-				// Apply a random opening if available
-				if len(opening.KNOWN_OPENINGS) > 0 {
-					openingIndex := rand.Intn(len(opening.KNOWN_OPENINGS))
-					selectedOpening := opening.KNOWN_OPENINGS[openingIndex]
-
-					// Apply opening moves
-					transcript := selectedOpening.Transcript
-					for j := 0; j < len(transcript); j += 2 {
-						if j+1 >= len(transcript) {
-							break
-						}
-
-						// Parse algebraic notation (e.g., "c4")
-						col := int(transcript[j] - 'a')
-						row := int(transcript[j+1] - '1')
-						pos := game.Position{Row: row, Col: col}
-
-						// Apply the move
-						g.Board, _ = game.ApplyMoveToBoard(g.Board, g.CurrentPlayer.Color, pos)
-						g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
+				for index := range 2 {
+					win1, win2, draw := learning.PlayMatchWithOpening(eval1, eval2, selectedOpenings[i], index, searchDepth)
+					bar.Add(1)
+					if win1 {
+						resultsCh <- 1
+					} else if win2 {
+						resultsCh <- 2
+					} else if draw {
+						resultsCh <- 0
 					}
 				}
-
-				// Alternate which AI goes first
-				var firstEval, secondEval evaluation.Evaluation
-				if i%2 == 0 {
-					firstEval = eval1
-					secondEval = eval2
-				} else {
-					firstEval = eval2
-					secondEval = eval1
-				}
-
-				// Play the game
-				var winner game.Piece
-				gameOver := false
-
-				for !gameOver {
-					// Determine which evaluation to use
-					var currentEval evaluation.Evaluation
-					if g.CurrentPlayer.Color == game.Black {
-						currentEval = firstEval
-					} else {
-						currentEval = secondEval
-					}
-
-					// Check if current player has valid moves
-					validMoves := game.ValidMoves(g.Board, g.CurrentPlayer.Color)
-					if len(validMoves) > 0 {
-						// Get the best move using minimax search
-						pos, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, searchDepth, currentEval)
-						g.ApplyMove(pos)
-					} else {
-						// Skip turn if no valid moves
-						g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
-					}
-
-					// Check if game is over
-					if game.IsGameFinished(g.Board) {
-						gameOver = true
-						winner = game.GetWinner(g.Board)
-					}
-				}
-
-				// Determine outcome: 0 = draw, 1 = Version1 win, 2 = Version2 win
-				var outcome int
-				version1Color := game.Black
-				if i%2 != 0 {
-					version1Color = game.White
-				}
-				if winner == game.Empty {
-					outcome = 0
-				} else if winner == version1Color {
-					outcome = 1
-				} else {
-					outcome = 2
-				}
-				bar.Add(1)
-				resultsCh <- outcome
 			}
 		}()
 	}
 
-	wg.Wait()
-	close(resultsCh)
+	// Close results channel after all workers are done
+	go func() {
+		wg.Wait()
+		close(resultsCh)
+	}()
 
-	// Collect results and update statistics with progress bar updates
+	// Collect results without additional progress bar updates
 	for outcome := range resultsCh {
-		if outcome == 0 {
+		switch outcome {
+		case 0:
 			stats.Draws++
-		} else if outcome == 1 {
+		case 1:
 			stats.Version1Wins++
-		} else {
+		default:
 			stats.Version2Wins++
 		}
-		bar.Add(1)
 	}
 
 	// Calculate percentages
-	stats.Version1WinPct = float64(stats.Version1Wins) * 100.0 / float64(numGames)
-	stats.Version2WinPct = float64(stats.Version2Wins) * 100.0 / float64(numGames)
-	stats.DrawPct = float64(stats.Draws) * 100.0 / float64(numGames)
+	stats.Version1WinPct = float64(stats.Version1Wins) * 100.0 / float64(numGames*2)
+	stats.Version2WinPct = float64(stats.Version2Wins) * 100.0 / float64(numGames*2)
+	stats.DrawPct = float64(stats.Draws) * 100.0 / float64(numGames*2)
 
 	return stats
 }
@@ -193,8 +127,17 @@ func PrintComparison(stats PerformanceResult) {
 
 func CompareVersions(numGames int, searchDepth int8) (results []PerformanceResult) {
 
-	stats := CompareCoefficients(evaluation.V4Coeff, evaluation.V5Coeff, numGames, searchDepth)
-	results = append(results, stats)
+	for i := range evaluation.Models {
+		for j := range evaluation.Models {
+			if i >= j {
+				continue // Avoid duplicate comparisons and self-comparisons
+			}
+
+			// Compare each model with every other model
+			res := CompareCoefficients(evaluation.Models[i], evaluation.Models[j], numGames, searchDepth)
+			results = append(results, res)
+		}
+	}
 
 	return
 }

@@ -18,3 +18,17 @@ func MatchOpening(transcript string) []Opening {
 func SelectRandomOpening() Opening {
 	return KNOWN_OPENINGS[rand.Intn(len(KNOWN_OPENINGS))]
 }
+
+func SelectRandomOpenings(numGames int) []Opening {
+	openingCount := len(KNOWN_OPENINGS)
+	if numGames > openingCount {
+		numGames = openingCount
+	}
+
+	shuffled := make([]Opening, len(KNOWN_OPENINGS))
+	copy(shuffled, KNOWN_OPENINGS)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled[:numGames]
+}

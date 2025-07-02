@@ -62,23 +62,9 @@ func ValidMoves(board Board, playerColor Piece) []Position {
 
 }
 
-// Pre-allocated position buffers to reduce garbage collection pressure
-var (
-	positionBuffer1 = make([]Position, 0, 32)
-	positionBuffer2 = make([]Position, 0, 32)
-	bufferIndex     = 0
-)
-
 // getPositionBuffer returns a pre-allocated buffer, alternating between two buffers
 func getPositionBuffer() []Position {
-	bufferIndex = 1 - bufferIndex
-	if bufferIndex == 0 {
-		positionBuffer1 = positionBuffer1[:0]
-		return positionBuffer1
-	} else {
-		positionBuffer2 = positionBuffer2[:0]
-		return positionBuffer2
-	}
+	return make([]Position, 0, 32)
 }
 
 // ValidMovesBitBoard returns all valid moves for a player using state-of-the-art bitboard operations

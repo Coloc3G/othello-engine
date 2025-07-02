@@ -126,8 +126,6 @@ func playMatch(model1, model2 *Model, open []game.Position) game.Piece {
 
 	}
 
-	fmt.Printf("Game finished! %s vs %s : %s\n", model1.cmd.Path, model2.cmd.Path, utils.PositionsToAlgebraic(g.History))
-
 	// Determine winner
 	winner := g.GetWinnerMethod()
 	return winner
@@ -201,7 +199,7 @@ func main() {
 	// Parse command-line flags
 	model1 := flag.String("model1", "", "CLI Executable path to first model")
 	model2 := flag.String("model2", "", "CLI Executable path to second model")
-	numMatches := flag.Int("matches", 10, "Number of matches to play between models (2 games per match)")
+	numMatches := flag.Int("matches", 100, "Number of matches to play between models (2 games per match)")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")
 	flag.Parse()
 

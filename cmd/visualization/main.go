@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Coloc3G/othello-engine/models/opening"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
@@ -34,10 +35,14 @@ func main() {
 	showASCII := flag.Bool("ascii", true, "Show ASCII visualization in terminal")
 	flag.Parse()
 
+	if *numGames > len(opening.KNOWN_OPENINGS) {
+		*numGames = len(opening.KNOWN_OPENINGS)
+	}
+
 	searchDepth8 := int8(*searchDepth)
 
 	fmt.Println("Othello AI Performance Visualization")
-	fmt.Printf("Running with %d games at depth %d\n", *numGames, searchDepth8)
+	fmt.Printf("Running with %d matches (2 matches/game) at depth %d\n", *numGames*2, searchDepth8)
 
 	// Run all comparisons and generate results
 	results := runAllComparisons(*numGames, searchDepth8)
@@ -55,7 +60,6 @@ func main() {
 // runAllComparisons runs all comparisons and returns results
 func runAllComparisons(numGames int, searchDepth int8) []PerformanceResult {
 	// Compare V1 vs V2
-	fmt.Println("Comparing V1 vs V2...")
 	results := CompareVersions(numGames, searchDepth)
 	return results
 }
@@ -185,7 +189,20 @@ func showASCIIVisualizations(results []PerformanceResult) {
 			result.Version2Name, result.Version2WinPct)
 
 		fmt.Println(strings.Repeat("-", 60))
+
+		if result.Version1Wins > result.Version2Wins {
+			diff := result.Version1Wins - result.Version2Wins
+			fmt.Printf("%s is stronger by %d games (%.1f%% margin)\n",
+				result.Version1Name, diff, float64(diff)*100.0/float64(result.TotalGames))
+		} else if result.Version2Wins > result.Version1Wins {
+			diff := result.Version2Wins - result.Version1Wins
+			fmt.Printf("%s is stronger by %d games (%.1f%% margin)\n",
+				result.Version2Name, diff, float64(diff)*100.0/float64(result.TotalGames))
+		} else {
+			fmt.Println("Both versions appear equally matched")
+		}
 	}
+
 }
 
 // drawASCIIBar draws a simple ASCII bar with label

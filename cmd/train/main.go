@@ -17,7 +17,14 @@ func main() {
 	depth := flag.Int("depth", 5, "Search depth for AI")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")
 	baseModel := flag.String("base", "V1", "Base model to use for training (default: V1)")
+	modelName := flag.String("name", "", "Name of the model to save after training")
 	flag.Parse()
+
+	if *modelName == "" {
+		fmt.Println("Please provide a name for the model using the -name flag.")
+		flag.Usage()
+		return
+	}
 
 	// Set max parallelism
 	runtime.GOMAXPROCS(*threads)
@@ -34,13 +41,11 @@ func main() {
 	}
 
 	// Create appropriate trainer
-	trainer := learning.NewTrainer(*populationSize, *numGames, int8(*depth), baseModelCoeffs)
+	trainer := learning.NewTrainer(*modelName, *populationSize, *numGames, int8(*depth), baseModelCoeffs)
 
 	// Print training configuration
 	fmt.Println("Othello AI Trainer")
 	fmt.Printf("Starting training for %d generations with population size %d, playing %d matches\n\n",
 		*generations, *populationSize, *numGames)
 	trainer.StartTraining(*generations)
-
-	fmt.Println("Training completed!")
 }

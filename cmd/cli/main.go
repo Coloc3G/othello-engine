@@ -63,7 +63,7 @@ func main() {
 
 		}
 		if !found {
-			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, evaluator)
+			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 5, evaluator)
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))
