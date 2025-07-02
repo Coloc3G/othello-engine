@@ -210,7 +210,7 @@ func (s *GameScreen) Update() error {
 				boardX := (x - s.boardOffsetX) / s.cellSize
 				boardY := (y - s.boardOffsetY) / s.cellSize
 
-				pos := game.Position{Row: boardY, Col: boardX}
+				pos := game.Position{Row: int8(boardY), Col: int8(boardX)}
 
 				// Try to make the move
 				if s.ui.game.ApplyMove(pos) {
@@ -440,8 +440,8 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 	// Draw grid and pieces
 	for row := 0; row < 8; row++ {
 		for col := 0; col < 8; col++ {
-			x := s.boardOffsetX + col*s.cellSize
-			y := s.boardOffsetY + row*s.cellSize
+			x := int8(s.boardOffsetX + col*s.cellSize)
+			y := int8(s.boardOffsetY + row*s.cellSize)
 
 			// Draw cell border
 			ebitenutil.DrawRect(screen, float64(x), float64(y),
@@ -451,7 +451,7 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 			// Determine cell color - check if this is the last move position
 			cellColor := color.RGBA{50, 150, 50, 255} // Default cell color
 
-			if s.lastMovePos.Row == row && s.lastMovePos.Col == col {
+			if s.lastMovePos.Row == int8(row) && s.lastMovePos.Col == int8(col) {
 				// Highlight the last move with a different color
 				cellColor = ColorLastMove
 			}
@@ -464,7 +464,7 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 			// Check if this is a valid move
 			isValidMove := false
 			for _, pos := range validMoves {
-				if pos.Row == row && pos.Col == col {
+				if pos.Row == int8(row) && pos.Col == int8(col) {
 					isValidMove = true
 					break
 				}
@@ -486,8 +486,8 @@ func (s *GameScreen) drawGameBoard(screen *ebiten.Image) {
 				}
 
 				// Draw circle for piece
-				centerX := float64(x + s.cellSize/2)
-				centerY := float64(y + s.cellSize/2)
+				centerX := float64(int(x) + s.cellSize/2)
+				centerY := float64(int(y) + s.cellSize/2)
 				radius := float64(s.cellSize/2 - 4)
 				s.drawCircle(screen, centerX, centerY, radius, pieceColor)
 			}
@@ -589,7 +589,7 @@ func (s *GameScreen) updateProgressiveEvaluation() {
 			}
 
 			// Perform evaluation at current depth
-			evalScore := evaluation.MMAB(
+			evalScore, _ := evaluation.MMAB(
 				utils.BoardToBits(gameCopy.Board),
 				player.Color,
 				int8(depth),

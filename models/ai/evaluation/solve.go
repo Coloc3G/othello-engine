@@ -49,7 +49,7 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 
 	for _, move := range validMoves {
 		newBoard, _ := game.GetNewBitBoardAfterMove(bb, move, player)
-		childScore := MMAB(newBoard, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+		childScore, _ := MMAB(newBoard, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 
 		if player == game.White {
 			// Maximizing white player
@@ -74,12 +74,11 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		}
 
 	}
-
 	return bestMove, bestScore
 }
 
 // MMAB performs minimax search with alpha-beta pruning
-func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, eval Evaluation, cache map[string]MMABCacheNode, perfStats *stats.PerformanceStats) int16 {
+func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, eval Evaluation, cache map[string]MMABCacheNode, perfStats *stats.PerformanceStats) (score int16, path []game.Position) {
 
 	var cachedNode *MMABCacheNode
 
@@ -123,6 +122,7 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 			}
 		} else {
 			score = eval.PECEvaluate(node, pec)
+			pec.Debug = false
 
 			// Track evaluation time
 			if perfStats != nil {
@@ -134,7 +134,7 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 			cache[boardHash] = *cachedNode
 		}
 
-		return score
+		return score, nil
 	}
 
 	// Determine current player
@@ -150,7 +150,7 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 	if len(moves) == 0 {
 		return MMAB(node, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 	}
-
+	var bestMoves []game.Position
 	if player == game.White {
 		// Maximizing white
 		bestScore := MIN_EVAL - 1
@@ -172,11 +172,15 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				cache[boardHash] = *cachedNode
 			}
 			// Recursive evaluation
-			score := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+			score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 
 			// Update best score
 			if score > bestScore {
 				bestScore = score
+				bestMoves = []game.Position{move}
+				if childMoves != nil {
+					bestMoves = append(bestMoves, childMoves...)
+				}
 			}
 
 			// Update alpha for pruning
@@ -192,7 +196,7 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				break
 			}
 		}
-		return bestScore
+		return bestScore, bestMoves
 	} else {
 		bestScore := MAX_EVAL + 1
 
@@ -216,11 +220,15 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 			}
 
 			// Recursive evaluation
-			score := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+			score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 
 			// Update best score
 			if score < bestScore {
 				bestScore = score
+				bestMoves = []game.Position{move}
+				if childMoves != nil {
+					bestMoves = append(bestMoves, childMoves...)
+				}
 			}
 
 			// Update beta for pruning
@@ -236,6 +244,6 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				break
 			}
 		}
-		return bestScore
+		return bestScore, bestMoves
 	}
 }

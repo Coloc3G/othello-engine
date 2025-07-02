@@ -61,7 +61,8 @@ func CompareCoefficients(coeff1, coeff2 evaluation.EvaluationCoefficients, numGa
 			defer wg.Done()
 			for i := range jobsCh {
 				for index := range 2 {
-					win1, win2, draw := learning.PlayMatchWithOpening(eval1, eval2, selectedOpenings[i], index, searchDepth)
+					win1, win2, draw, _ := learning.PlayMatchWithOpening(eval1, eval2, selectedOpenings[i], index, searchDepth)
+
 					bar.Add(1)
 					if win1 {
 						resultsCh <- 1
@@ -127,17 +128,20 @@ func PrintComparison(stats PerformanceResult) {
 
 func CompareVersions(numGames int, searchDepth int8) (results []PerformanceResult) {
 
-	for i := range evaluation.Models {
-		for j := range evaluation.Models {
-			if i >= j {
-				continue // Avoid duplicate comparisons and self-comparisons
-			}
+	// for i := range evaluation.Models {
+	// 	for j := range evaluation.Models {
+	// 		if i >= j {
+	// 			continue // Avoid duplicate comparisons and self-comparisons
+	// 		}
 
-			// Compare each model with every other model
-			res := CompareCoefficients(evaluation.Models[i], evaluation.Models[j], numGames, searchDepth)
-			results = append(results, res)
-		}
-	}
+	// 		// Compare each model with every other model
+	// 		res := CompareCoefficients(evaluation.Models[i], evaluation.Models[j], numGames, searchDepth)
+	// 		results = append(results, res)
+	// 	}
+	// }
+
+	res := CompareCoefficients(evaluation.V6Coeff, evaluation.V5Coeff, numGames, searchDepth)
+	results = append(results, res)
 
 	return
 }

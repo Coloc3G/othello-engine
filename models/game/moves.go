@@ -13,8 +13,8 @@ func ValidMoves(board Board, playerColor Piece) []Position {
 	}
 
 	// Check all empty cells on the board
-	for row := range 8 {
-		for col := range 8 {
+	for row := range int8(8) {
+		for col := range int8(8) {
 			if board[row][col] != Empty {
 				continue
 			}
@@ -60,11 +60,6 @@ func ValidMoves(board Board, playerColor Piece) []Position {
 
 	return moves
 
-}
-
-// getPositionBuffer returns a pre-allocated buffer, alternating between two buffers
-func getPositionBuffer() []Position {
-	return make([]Position, 0, 32)
 }
 
 // ValidMovesBitBoard returns all valid moves for a player using state-of-the-art bitboard operations
@@ -164,7 +159,7 @@ func bitboardToPositionsOptimized(bitboard uint64) []Position {
 		return nil
 	}
 
-	buffer := getPositionBuffer()
+	buffer := make([]Position, 0, 32) // Pre-allocate with reasonable capacity
 
 	// Use optimized bit scanning loop
 	for bitboard != 0 {
@@ -174,16 +169,13 @@ func bitboardToPositionsOptimized(bitboard uint64) []Position {
 		row := bitPos >> 3 // Equivalent to bitPos / 8 but faster
 		col := bitPos & 7  // Equivalent to bitPos % 8 but faster
 
-		buffer = append(buffer, Position{Row: row, Col: col})
+		buffer = append(buffer, Position{Row: int8(row), Col: int8(col)})
 
 		// Clear the least significant bit
 		bitboard &= bitboard - 1
 	}
 
-	// Create a copy to avoid buffer reuse issues
-	result := make([]Position, len(buffer))
-	copy(result, buffer)
-	return result
+	return buffer
 }
 
 // trailingZeros counts trailing zeros using optimized bit manipulation

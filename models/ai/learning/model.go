@@ -12,18 +12,6 @@ type EvaluationModel struct {
 	Wins       int                               `json:"wins"`
 	Losses     int                               `json:"losses"`
 	Draws      int                               `json:"draws"`
-}
-
-// Function to get average wins across models
-func calculateAverageWins(models []EvaluationModel) float64 {
-	if len(models) == 0 {
-		return 0
-	}
-
-	total := 0
-	for _, model := range models {
-		total += model.Wins
-	}
-
-	return float64(total) / float64(len(models))
+	BlackGames map[string]string                 `json:"black_game"`
+	WhiteGames map[string]string                 `json:"white_game"`
 }

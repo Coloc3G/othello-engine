@@ -72,7 +72,17 @@ func MutateCoefficients(coeffs evaluation.EvaluationCoefficients) evaluation.Eva
 
 // CreateDiverseModel creates a different but not wildly different model for initial population
 func CreateDiverseModel(baseModel EvaluationModel) EvaluationModel {
-	newModel := baseModel
+	newModel := EvaluationModel{
+		Coeffs: evaluation.EvaluationCoefficients{
+			MaterialCoeffs:  make([]int16, 3),
+			MobilityCoeffs:  make([]int16, 3),
+			CornersCoeffs:   make([]int16, 3),
+			ParityCoeffs:    make([]int16, 3),
+			StabilityCoeffs: make([]int16, 3),
+			FrontierCoeffs:  make([]int16, 3),
+			Name:            "Gen1",
+		},
+	}
 	newModel.Generation = baseModel.Generation + 1
 
 	// Apply random scaling factors with more moderate ranges

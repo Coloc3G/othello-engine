@@ -16,7 +16,7 @@ import (
 func PlayMatchWithOpening(
 	modelEval, standardEval evaluation.Evaluation,
 	op opening.Opening,
-	playerIndex int, maxDepth int8) (win, loss, draw bool) {
+	playerIndex int, maxDepth int8) (win, loss, draw bool, history []game.Position) {
 	// Create a new game
 	g := game.NewGame("Black", "White")
 	var blackCount, whiteCount int
@@ -31,6 +31,7 @@ func PlayMatchWithOpening(
 	for !game.IsGameFinished(g.Board) {
 		// Determine which evaluation to use
 		var currentEval evaluation.Evaluation
+
 		if g.CurrentPlayer.Color == modelColor {
 			currentEval = modelEval
 		} else {
@@ -54,18 +55,18 @@ func PlayMatchWithOpening(
 	// Return result from model's perspective
 	if modelColor == game.Black {
 		if blackCount > whiteCount {
-			return true, false, false // Win
+			return true, false, false, g.History // Win
 		} else if blackCount < whiteCount {
-			return false, true, false // Loss
+			return false, true, false, g.History // Loss
 		}
-		return false, false, true // Draw
+		return false, false, true, g.History // Draw
 	} else {
 		if whiteCount > blackCount {
-			return true, false, false // Win
+			return true, false, false, g.History // Win
 		} else if whiteCount < blackCount {
-			return false, true, false // Loss
+			return false, true, false, g.History // Loss
 		}
-		return false, false, true // Draw
+		return false, false, true, g.History // Draw
 	}
 }
 
@@ -113,7 +114,6 @@ func evaluateModelsInParallel(
 	bar := createProgressBar(totalMatches, "Evaluating models")
 	bar.RenderBlank()
 
-	// Standard evaluation for opponent
 	standardEval := evaluation.NewMixedEvaluation(baseModel)
 
 	// Launch goroutines for each model
@@ -126,6 +126,8 @@ func evaluateModelsInParallel(
 			model.Wins = 0
 			model.Losses = 0
 			model.Draws = 0
+			model.BlackGames = make(map[string]string, 0)
+			model.WhiteGames = make(map[string]string, 0)
 			evalFunc := evaluation.NewMixedEvaluation(model.Coeffs)
 
 			// Play games against standard AI with selected openings
@@ -133,8 +135,16 @@ func evaluateModelsInParallel(
 				for playerIdx := range 2 {
 
 					// Play the match
-					win, loss, draw := PlayMatchWithOpening(
+					win, loss, draw, history := PlayMatchWithOpening(
 						evalFunc, standardEval, op, playerIdx, maxDepth)
+
+					// Store the game history
+					historyString := utils.PositionsToAlgebraic(history)
+					if playerIdx == 0 {
+						model.BlackGames[op.Name] = historyString
+					} else {
+						model.WhiteGames[op.Name] = historyString
+					}
 
 					// Record game result
 					if win {

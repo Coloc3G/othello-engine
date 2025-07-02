@@ -27,7 +27,7 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 }
 
 func main() {
-	evaluator := evaluation.NewMixedEvaluation(evaluation.V5Coeff)
+	evaluator := evaluation.NewMixedEvaluation(evaluation.Models[len(evaluation.Models)-1]) // Use the latest evaluation model
 
 	for {
 		algebraicPosition := ""
@@ -63,7 +63,7 @@ func main() {
 
 		}
 		if !found {
-			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 5, evaluator)
+			move, _ = evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, evaluator)
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))

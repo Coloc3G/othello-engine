@@ -8,8 +8,8 @@ func AlgebraicToPosition(algebraic string) game.Position {
 		return game.Position{Row: -1, Col: -1} // Invalid position
 	}
 
-	col := int(algebraic[0] - 'a')
-	row := int(algebraic[1] - '1')
+	col := int8(algebraic[0] - 'a')
+	row := int8(algebraic[1] - '1')
 
 	// Check boundaries
 	if row < 0 || row > 7 || col < 0 || col > 7 {

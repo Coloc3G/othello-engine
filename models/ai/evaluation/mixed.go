@@ -1,9 +1,6 @@
 package evaluation
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/Coloc3G/othello-engine/models/game"
 )
 
@@ -98,6 +95,12 @@ func (e *MixedEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputat
 		println("parityCoeff:", parityCoeff, "\tparityScore:", parityScore)
 		println("stabilityCoeff:", stabilityCoeff, "\tstabilityScore:", stabilityScore)
 		println("frontierCoeff:", frontierCoeff, "\tfrontierScore:", frontierScore)
+		println("Resulting score:", materialCoeff*materialScore+
+			mobilityCoeff*mobilityScore+
+			cornersCoeff*cornersScore+
+			parityCoeff*parityScore+
+			stabilityCoeff*stabilityScore+
+			frontierCoeff*frontierScore)
 	}
 
 	return materialCoeff*materialScore +
@@ -126,36 +129,4 @@ func (e *MixedEvaluation) ComputeGamePhaseCoefficients(pec PreEvaluationComputat
 		e.ParityCoeff[phase],
 		e.StabilityCoeff[phase],
 		e.FrontierCoeff[phase]
-}
-
-// SaveCoefficients saves the current coefficients to a file
-func (e *MixedEvaluation) SaveCoefficients(filename string) error {
-	coeffs := EvaluationCoefficients{
-		MaterialCoeffs:  e.MaterialCoeff,
-		MobilityCoeffs:  e.MobilityCoeff,
-		CornersCoeffs:   e.CornersCoeff,
-		ParityCoeffs:    e.ParityCoeff,
-		StabilityCoeffs: e.StabilityCoeff,
-		FrontierCoeffs:  e.FrontierCoeff,
-	}
-
-	data, err := json.MarshalIndent(coeffs, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filename, data, 0644)
-}
-
-// LoadCoefficients loads coefficients from a file
-func LoadCoefficients(filename string) (EvaluationCoefficients, error) {
-	var coeffs EvaluationCoefficients
-
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return coeffs, err
-	}
-
-	err = json.Unmarshal(data, &coeffs)
-	return coeffs, err
 }

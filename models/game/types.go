@@ -9,8 +9,8 @@ const (
 )
 
 type Position struct {
-	Row int
-	Col int
+	Row int8
+	Col int8
 }
 
 type Board [8][8]Piece

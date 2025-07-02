@@ -56,12 +56,23 @@ var (
 		FrontierCoeffs:  []int16{58, 11, 23},
 	}
 
+	V6Coeff = EvaluationCoefficients{
+		Name:            "V6",
+		MaterialCoeffs:  []int16{2, 1, 12},
+		MobilityCoeffs:  []int16{21, 5, 79},
+		CornersCoeffs:   []int16{89, 100, 82},
+		ParityCoeffs:    []int16{45, 9, 2},
+		StabilityCoeffs: []int16{20, 7, 1},
+		FrontierCoeffs:  []int16{67, 12, 11},
+	}
+
 	Models []EvaluationCoefficients = []EvaluationCoefficients{
 		V1Coeff,
 		V2Coeff,
 		V3Coeff,
 		V4Coeff,
 		V5Coeff,
+		V6Coeff,
 	}
 )
 
