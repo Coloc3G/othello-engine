@@ -1,7 +1,6 @@
 package evaluation
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/stats"
@@ -94,19 +93,6 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		}
 
 	}
-	moveEntries := 0
-	for _, movesMap := range cache.MovesCache {
-		moveEntries += len(movesMap)
-	}
-	scoreEntries := len(cache.ScoreCache)
-	pecEntries := len(cache.PECCache)
-	movesEntries := len(cache.MovesCache)
-
-	fmt.Println("Cache size:",
-		pecEntries, "PEC entries,",
-		scoreEntries, "Score entries,",
-		movesEntries, "Moves entries,",
-		moveEntries, "Move positions")
 	return bestMoves, bestScore
 }
 
