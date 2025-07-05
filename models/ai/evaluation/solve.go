@@ -1,6 +1,7 @@
 package evaluation
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Coloc3G/othello-engine/models/ai/stats"
@@ -8,13 +9,20 @@ import (
 	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
-type MMABCacheNode struct {
-	PrecomputedEvaluation PreEvaluationComputation
-	Leaf                  bool
-	Score                 int16
-	Moves                 map[string]game.BitBoard
-	RecursiveWhite        map[int8]int16
-	RecursiveBlack        map[int8]int16
+type Cache struct {
+	PECCache   map[string]PreEvaluationComputation
+	ScoreCache map[string]int16
+	MovesCache map[string]map[string]game.BitBoard
+}
+
+// NewCache creates a new cache with PEC priority
+func NewCache() *Cache {
+
+	return &Cache{
+		PECCache:   make(map[string]PreEvaluationComputation),
+		ScoreCache: make(map[string]int16),
+		MovesCache: make(map[string]map[string]game.BitBoard),
+	}
 }
 
 func Solve(b game.Board, player game.Piece, depth int8, eval Evaluation) ([]game.Position, int16) {
@@ -45,7 +53,7 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 	alpha := MIN_EVAL - 1
 	beta := MAX_EVAL + 1
 	opponent := game.GetOtherPlayer(player).Color
-	cache := make(map[string]MMABCacheNode)
+	cache := NewCache() // Cache optimisé avec priorité PEC
 
 	for _, move := range validMoves {
 		newBoard, _ := game.GetNewBitBoardAfterMove(bb, move, player)
@@ -86,13 +94,24 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		}
 
 	}
+	moveEntries := 0
+	for _, movesMap := range cache.MovesCache {
+		moveEntries += len(movesMap)
+	}
+	scoreEntries := len(cache.ScoreCache)
+	pecEntries := len(cache.PECCache)
+	movesEntries := len(cache.MovesCache)
+
+	fmt.Println("Cache size:",
+		pecEntries, "PEC entries,",
+		scoreEntries, "Score entries,",
+		movesEntries, "Moves entries,",
+		moveEntries, "Move positions")
 	return bestMoves, bestScore
 }
 
 // MMAB performs minimax search with alpha-beta pruning
-func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, eval Evaluation, cache map[string]MMABCacheNode, perfStats *stats.PerformanceStats) (score int16, path []game.Position) {
-
-	var cachedNode *MMABCacheNode
+func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, eval Evaluation, cache *Cache, perfStats *stats.PerformanceStats) (score int16, path []game.Position) {
 
 	hashStart := time.Now()
 	boardHash := utils.HashBitBoard(node)
@@ -101,49 +120,42 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 		perfStats.RecordOperation("hashBoard", pecTime, boardHash)
 	}
 
-	var pec PreEvaluationComputation
-	pecTimeStart := time.Now()
-	if c, exists := cache[boardHash]; exists {
-		pec = c.PrecomputedEvaluation
-		if perfStats != nil {
-			perfStats.RecordOperation("pec_cache_hit", time.Since(pecTimeStart), boardHash)
-		}
-		cachedNode = &c
-	} else {
-		pec = PrecomputeEvaluationBitBoard(node)
-		if perfStats != nil {
-			perfStats.RecordOperation("pec", time.Since(pecTimeStart), boardHash)
-		}
-		cachedNode = &MMABCacheNode{
-			PrecomputedEvaluation: pec,
-			Leaf:                  false,
-			Score:                 0,
-			Moves:                 make(map[string]game.BitBoard),
-		}
-		cache[boardHash] = *cachedNode
-	}
 	// Base case: leaf node or terminal position
-	if depth == 0 || pec.IsGameOver {
+	if depth == 0 {
 		// Evaluate position
 		var score int16
 		evalStartTime := time.Now()
-		if cachedNode.Leaf {
-			score = cachedNode.Score
+		if cachedScore, exists := cache.ScoreCache[boardHash]; exists {
+			score = cachedScore
 			if perfStats != nil {
 				perfStats.RecordOperation("leaf_eval_cache_hit", time.Since(evalStartTime), boardHash)
 			}
 		} else {
+			var pec PreEvaluationComputation
+			pecTimeStart := time.Now()
+			if c, exists := cache.PECCache[boardHash]; exists {
+				pec = c
+				if perfStats != nil {
+					perfStats.RecordOperation("pec_cache_hit", time.Since(pecTimeStart), boardHash)
+				}
+			} else {
+				pec = PrecomputeEvaluationBitBoard(node)
+				if perfStats != nil {
+					perfStats.RecordOperation("pec", time.Since(pecTimeStart), boardHash)
+				}
+				cache.PECCache[boardHash] = pec
+				cache.MovesCache[boardHash] = make(map[string]game.BitBoard)
+			}
+
+			evalStartTime = time.Now()
 			score = eval.PECEvaluate(node, pec)
-			pec.Debug = false
 
 			// Track evaluation time
 			if perfStats != nil {
 				perfStats.RecordOperation("leaf_eval", time.Since(evalStartTime), boardHash)
 			}
 
-			cachedNode.Leaf = true
-			cachedNode.Score = score
-			cache[boardHash] = *cachedNode
+			cache.ScoreCache[boardHash] = score
 		}
 
 		return score, nil
@@ -151,26 +163,24 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 
 	// Determine current player
 	opponent := game.GetOtherPlayer(player).Color
-	var moves []game.Position
-	if player == game.White {
-		moves = pec.WhiteValidMoves
-	} else {
-		moves = pec.BlackValidMoves
-	}
+	moves := game.ValidMovesBitBoard(node, player)
 
 	// If no valid moves, pass turn
 	if len(moves) == 0 {
 		return MMAB(node, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 	}
 	var bestMoves []game.Position
-	if player == game.White {
-		// Maximizing white
-		bestScore := MIN_EVAL - 1
-		for _, move := range moves {
-			algebraicMove := utils.PositionToAlgebraic(move)
-			var newNode game.BitBoard
-			moveStart := time.Now()
-			if b, exists := cachedNode.Moves[algebraicMove]; exists {
+	bestScore := MIN_EVAL - 1
+	if player == game.Black {
+		bestScore = MAX_EVAL + 1
+	}
+
+	for _, move := range moves {
+		algebraicMove := utils.PositionToAlgebraic(move)
+		var newNode game.BitBoard
+		moveStart := time.Now()
+		if movesMap, exists := cache.MovesCache[boardHash]; exists {
+			if b, exists := movesMap[algebraicMove]; exists {
 				newNode = b
 				if perfStats != nil {
 					perfStats.RecordOperation("move_cache_hit", time.Since(moveStart), algebraicMove+"-"+boardHash)
@@ -180,13 +190,21 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				if perfStats != nil {
 					perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
 				}
-				cachedNode.Moves[algebraicMove] = newNode
-				cache[boardHash] = *cachedNode
-			}
-			// Recursive evaluation
-			score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+				movesMap[algebraicMove] = newNode
 
-			// Update best score
+			}
+		} else {
+			newNode, _ = game.GetNewBitBoardAfterMove(node, move, player)
+			if perfStats != nil {
+				perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
+			}
+			cache.MovesCache[boardHash] = map[string]game.BitBoard{algebraicMove: newNode}
+
+		}
+		// Recursive evaluation
+		score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
+
+		if player == game.White {
 			if score > bestScore {
 				bestScore = score
 				bestMoves = []game.Position{move}
@@ -210,34 +228,7 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				}
 				break
 			}
-		}
-		return bestScore, bestMoves
-	} else {
-		bestScore := MAX_EVAL + 1
-
-		for _, move := range moves {
-
-			algebraicMove := utils.PositionToAlgebraic(move)
-			var newNode game.BitBoard
-			moveStart := time.Now()
-			if b, exists := cachedNode.Moves[algebraicMove]; exists {
-				newNode = b
-				if perfStats != nil {
-					perfStats.RecordOperation("move_cache_hit", time.Since(moveStart), algebraicMove+"-"+boardHash)
-				}
-			} else {
-				newNode, _ = game.GetNewBitBoardAfterMove(node, move, player)
-				if perfStats != nil {
-					perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
-				}
-				cachedNode.Moves[algebraicMove] = newNode
-				cache[boardHash] = *cachedNode
-			}
-
-			// Recursive evaluation
-			score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
-
-			// Update best score
+		} else {
 			if score < bestScore {
 				bestScore = score
 				bestMoves = []game.Position{move}
@@ -262,6 +253,8 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 				break
 			}
 		}
-		return bestScore, bestMoves
+
 	}
+	return bestScore, bestMoves
+
 }

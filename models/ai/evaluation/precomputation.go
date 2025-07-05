@@ -1,6 +1,8 @@
 package evaluation
 
-import "github.com/Coloc3G/othello-engine/models/game"
+import (
+	"github.com/Coloc3G/othello-engine/models/game"
+)
 
 func PrecomputeEvaluation(b game.Board) (pec PreEvaluationComputation) {
 	black, white := game.CountPieces(b)
@@ -18,13 +20,14 @@ func PrecomputeEvaluation(b game.Board) (pec PreEvaluationComputation) {
 }
 
 func PrecomputeEvaluationBitBoard(b game.BitBoard) (pec PreEvaluationComputation) {
-	// Use optimized piece counting
+	// Use optimized piece counting with native popcount
 	black, white := game.CountPiecesBitBoard(b)
 	pec.BlackPieces = int16(black)
 	pec.WhitePieces = int16(white)
 
 	// Fast path: if board is full, game is over
-	if black+white == 64 {
+	totalPieces := black + white
+	if totalPieces == 64 {
 		pec.IsGameOver = true
 		// Initialize empty slices for consistency
 		pec.BlackValidMoves = make([]game.Position, 0)

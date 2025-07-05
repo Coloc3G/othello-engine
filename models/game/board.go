@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"math/bits"
+)
 
 // DisplayBoard prints a representation of the board to the console
 // DisplayBoard prints the current state of the Othello board to the console.
@@ -70,19 +73,8 @@ func CountPieces(board Board) (int, int) {
 }
 
 func CountPiecesBitBoard(bb BitBoard) (int, int) {
-	// Use optimized popcount for maximum performance
-	return popcount(bb.BlackPieces), popcount(bb.WhitePieces)
-}
-
-// popcount returns the number of set bits using Brian Kernighan's algorithm
-// This is much faster than the bit-by-bit approach
-func popcount(x uint64) int {
-	count := 0
-	for x != 0 {
-		count++
-		x &= x - 1 // Clear the lowest set bit
-	}
-	return count
+	// Use native hardware popcount for maximum performance
+	return bits.OnesCount64(bb.BlackPieces), bits.OnesCount64(bb.WhitePieces)
 }
 
 // CountPiecesMethod is a method wrapper for CountPieces

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"sort"
 	"time"
@@ -28,7 +29,11 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 
 func main() {
 
-	board := "c4c3d3c5f6e2c6d6b5c7b4e3b7e6f4b6a6f5f3g4g5a8"
+	d := flag.Int("depth", 10, "Search depth for evaluation")
+	showStats := flag.Bool("stats", false, "Show perf stats")
+	flag.Parse()
+
+	board := "c4c3d3e3e2c5f3c2b6c6b4b5d2d1e1f1d6e6a4d7c1b1f2c7f5a3a2b3f4g5g4h4d8g1e8g3g2b8f7g8h5h6"
 
 	// Initialize the game board
 	g := game.NewGame("test", "v4")
@@ -39,46 +44,50 @@ func main() {
 		return
 	}
 
+	depth := int8(*d)
+
 	eval := evaluation.NewMixedEvaluation(evaluation.V4Coeff)
-	stats := stats.NewPerformanceStats()
 	start := time.Now()
-	bestMoves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, 7, eval)
-	if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
-		fmt.Println("No valid moves found")
-		return
-	}
-	fmt.Println("Evaluation completed in:", time.Since(start))
-	fmt.Printf("Best moves: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
-	start = time.Now()
-	bestMoves, score = evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, 6, eval, stats)
-	if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
-		fmt.Println("No valid moves found")
-		return
-	}
-	fmt.Println("Evaluation with stats completed in:", time.Since(start))
-	fmt.Printf("Best move: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
-	fmt.Printf("Performance stats: \n")
-	for name, op := range stats.Operations {
-		fmt.Printf("Operation: %s, Count: %d, Time: %s\n", name, op.Count, op.Time)
-		// Sort descending by Hits
-		cachesStats := op.Cache
-		// Convert map to slice for sorting
-		type cacheStat struct {
-			Hash string
-			Hits int64
+	if *showStats {
+		stats := stats.NewPerformanceStats()
+		bestMoves, score := evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, depth, eval, stats)
+		if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
+			fmt.Println("No valid moves found")
+			return
 		}
-		var cacheStatsSlice []cacheStat
-		for hash, stat := range cachesStats {
-			cacheStatsSlice = append(cacheStatsSlice, cacheStat{Hash: hash, Hits: stat})
+		fmt.Println("Evaluation with stats completed in:", time.Since(start))
+		fmt.Printf("Best move: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
+		fmt.Printf("Performance stats: \n")
+		for name, op := range stats.Operations {
+			fmt.Printf("Operation: %s, Count: %d, Time: %s\n", name, op.Count, op.Time)
+			// Sort descending by Hits
+			cachesStats := op.Cache
+			// Convert map to slice for sorting
+			type cacheStat struct {
+				Hash string
+				Hits int64
+			}
+			var cacheStatsSlice []cacheStat
+			for hash, stat := range cachesStats {
+				cacheStatsSlice = append(cacheStatsSlice, cacheStat{Hash: hash, Hits: stat})
+			}
+			// Sort descending by Hits
+			sort.Slice(cacheStatsSlice, func(i, j int) bool {
+				return cacheStatsSlice[i].Hits > cacheStatsSlice[j].Hits
+			})
+			// Print sorted cache stats
+			for _, cs := range cacheStatsSlice[:min(10, len(cacheStatsSlice))] {
+				fmt.Printf("  Hash: %s, Hits: %d\n", cs.Hash, cs.Hits)
+			}
 		}
-		// Sort descending by Hits
-		sort.Slice(cacheStatsSlice, func(i, j int) bool {
-			return cacheStatsSlice[i].Hits > cacheStatsSlice[j].Hits
-		})
-		// Print sorted cache stats
-		for _, cs := range cacheStatsSlice[:min(10, len(cacheStatsSlice))] {
-			fmt.Printf("  Hash: %s, Hits: %d\n", cs.Hash, cs.Hits)
+	} else {
+		bestMoves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, depth, eval)
+		if len(bestMoves) == 0 || (len(bestMoves) == 1 && bestMoves[0].Row == -1 && bestMoves[0].Col == -1) {
+			fmt.Println("No valid moves found")
+			return
 		}
+		fmt.Println("Evaluation completed in:", time.Since(start))
+		fmt.Printf("Best moves: %s, Score: %d\n", utils.PositionsToAlgebraic(bestMoves), score)
 	}
 
 }

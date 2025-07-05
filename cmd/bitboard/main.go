@@ -42,17 +42,16 @@ func main() {
 		// },
 	}
 
-	// Add random board test cases
-	// numRandomBoards := 100
-	// for i := 0; i < numRandomBoards; i++ {
-	// 	testCases = append(testCases, struct {
-	// 		name  string
-	// 		board game.Board
-	// 	}{
-	// 		name:  fmt.Sprintf("Random Board %d", i+1),
-	// 		board: generateRandomBoard(),
-	// 	})
-	// }
+	numRandomBoards := 100
+	for i := 0; i < numRandomBoards; i++ {
+		testCases = append(testCases, struct {
+			name  string
+			board game.Board
+		}{
+			name:  fmt.Sprintf("Random Board %d", i+1),
+			board: generateRandomBoard(),
+		})
+	}
 
 	g := game.NewGame("Black", "White")
 	applyPosition(g, utils.AlgebraicToPositions("c4c3d3c5f6e2c6d6b5c7b4e3b7e6f4b6a6f5f3g4g5a8"))

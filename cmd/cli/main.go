@@ -30,6 +30,7 @@ func applyPosition(g *game.Game, pos []game.Position) (err error) {
 func main() {
 
 	debug := flag.Bool("debug", false, "Debug mode")
+	depth := flag.Int("depth", 10, "Search depth for AI evaluation")
 	flag.Parse()
 
 	evaluator := evaluation.NewMixedEvaluation(evaluation.Models[len(evaluation.Models)-1]) // Use the latest evaluation model
@@ -69,19 +70,19 @@ func main() {
 		}
 		if !found {
 
-			var depth int8 = 7
-			if len(pos) >= 47 {
-				depth = int8(64 - len(pos))
+			var searchDepth = int8(*depth)
+			if len(pos) >= 42 {
+				searchDepth = int8(64 - len(pos))
 			}
 
-			moves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, depth, evaluator)
+			moves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, searchDepth, evaluator)
 			if len(moves) == 0 || (len(moves) == 1 && moves[0].Row == -1 && moves[0].Col == -1) {
 				fmt.Println("No valid moves found")
 				continue
 			}
 			move = moves[0]
 			if *debug {
-				fmt.Printf("Depth %d (%d move) ; Score %d ; Continuation %s\n", depth, len(pos), score, utils.PositionsToAlgebraic(moves))
+				fmt.Printf("Depth %d (%d move) ; Score %d ; Continuation %s\n", searchDepth, len(pos), score, utils.PositionsToAlgebraic(moves))
 			}
 		}
 
