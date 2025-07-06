@@ -241,7 +241,7 @@ class EothelloBot:
             
         try:
             # Créer et démarrer un nouveau processus pour chaque coup
-            with ProcessHandler(self.binary_path, timeout=60.0) as engine:
+            with ProcessHandler(self.binary_path, timeout=500) as engine:
                 if not engine.is_alive:
                     logger.error("Impossible de démarrer le processus du moteur")
                     return None
@@ -425,13 +425,13 @@ class EothelloBot:
                 'move_index': move_index
             }
             
-            response = self.session.post(
-                f"{self.base_url}/make-move",
-                headers=self.headers,
-                data=data
-            )
+            # response = self.session.post(
+            #     f"{self.base_url}/make-move",
+            #     headers=self.headers,
+            #     data=data
+            # )
             
-            response.raise_for_status()
+            # response.raise_for_status()
             return True
             
         except Exception as e:
