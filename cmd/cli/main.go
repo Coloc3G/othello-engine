@@ -71,7 +71,7 @@ func main() {
 		if !found {
 
 			var searchDepth = int8(*depth)
-			if len(pos) >= 42 {
+			if len(pos) >= 45 {
 				searchDepth = int8(64 - len(pos))
 			}
 
