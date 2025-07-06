@@ -17,6 +17,7 @@ load_dotenv(".env")
 
 # Configuration depuis les variables d'environnement
 BINARY_PATH = os.getenv("BINARY_PATH")
+DEPTH = int(os.getenv("DEPTH", "10"))  # Profondeur pour l'IA, par défaut 10
 GAMES_CHECK_INTERVAL = int(os.getenv("GAMES_CHECK_INTERVAL", "600"))
 MOVES_CHECK_INTERVAL = int(os.getenv("MOVES_CHECK_INTERVAL", "60"))
 REQUEST_DELAY = int(os.getenv("REQUEST_DELAY", "1"))
@@ -31,8 +32,9 @@ logger = logging.getLogger(__name__)
 class ProcessHandler:
     """Classe similaire à pwntools pour gérer les processus avec des pipes robustes"""
     
-    def __init__(self, binary_path, timeout=5.0):
+    def __init__(self, binary_path, depth, timeout=5.0):
         self.binary_path = binary_path
+        self.depth = depth
         self.timeout = timeout
         self.process = None
         self.is_alive = False
@@ -41,7 +43,7 @@ class ProcessHandler:
         """Démarre le processus"""
         try:
             self.process = subprocess.Popen(
-                [self.binary_path],
+                [self.binary_path, '-depth', str(self.depth)],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -241,7 +243,7 @@ class EothelloBot:
             
         try:
             # Créer et démarrer un nouveau processus pour chaque coup
-            with ProcessHandler(self.binary_path, timeout=500) as engine:
+            with ProcessHandler(self.binary_path, DEPTH, timeout=500) as engine:
                 if not engine.is_alive:
                     logger.error("Impossible de démarrer le processus du moteur")
                     return None
@@ -425,13 +427,13 @@ class EothelloBot:
                 'move_index': move_index
             }
             
-            # response = self.session.post(
-            #     f"{self.base_url}/make-move",
-            #     headers=self.headers,
-            #     data=data
-            # )
+            response = self.session.post(
+                f"{self.base_url}/make-move",
+                headers=self.headers,
+                data=data
+            )
             
-            # response.raise_for_status()
+            response.raise_for_status()
             return True
             
         except Exception as e:
