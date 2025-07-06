@@ -235,15 +235,20 @@ class EothelloBot:
             logger.error(f"Erreur lors de la vérification du moteur : {e}")
             return False
     
-    def get_ai_move(self, position):
+    def get_ai_move(self, position, depth=DEPTH):
         """Lance un nouveau processus pour obtenir un coup"""
+        
+        if depth <= 0:
+            logger.debug("Profondeur maximale atteinte, arrêt de la recherche")
+            return None
+        
         if not self.binary_path or not os.path.exists(self.binary_path):
             logger.error("Le binaire du moteur d'IA n'est pas disponible")
             return None
             
         try:
             # Créer et démarrer un nouveau processus pour chaque coup
-            with ProcessHandler(self.binary_path, DEPTH, timeout=500) as engine:
+            with ProcessHandler(self.binary_path, depth, timeout=500) as engine:
                 if not engine.is_alive:
                     logger.error("Impossible de démarrer le processus du moteur")
                     return None
@@ -260,17 +265,17 @@ class EothelloBot:
                         return move
                     else:
                         logger.debug(f"Format de coup invalide reçu : '{move}'")
-                        return None
+                        return self.get_ai_move(position, depth-1)
                 else:
                     logger.debug("Aucun coup reçu du moteur")
-                    return None
+                    return self.get_ai_move(position, depth-1)
                     
         except TimeoutError:
             logger.error("Timeout lors de la communication avec le moteur")
-            return None
+            return self.get_ai_move(position, depth-1)
         except Exception as e:
             logger.error(f"Erreur lors de la communication avec le moteur : {e}")
-            return None
+            return self.get_ai_move(position, depth-1)
     
     def fetch_current_games(self):
         """Récupère la liste des parties en cours"""
