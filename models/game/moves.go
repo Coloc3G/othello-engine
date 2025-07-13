@@ -154,28 +154,52 @@ func koggeStoneDirection(playerBits, opponentBits, emptyBits uint64,
 }
 
 // bitboardToPositionsOptimized converts bitboard to positions with optimized bit scanning
+// Returns positions in priority order: corners first, then edges, then interior
 func bitboardToPositionsOptimized(bitboard uint64) []Position {
 	if bitboard == 0 {
 		return nil
 	}
 
-	buffer := make([]Position, 0, 32) // Pre-allocate with reasonable capacity
+	corners := make([]Position, 0, 4)
+	edges := make([]Position, 0, 20)
+	interior := make([]Position, 0, 36)
+
+	// Corner positions (highest priority)
+	cornerMask := uint64(0x8100000000000081) // positions 0, 7, 56, 63
+
+	// Edge positions (excluding corners)
+	edgeMask := uint64(0x7E8181818181817E) // border positions excluding corners
 
 	// Use optimized bit scanning loop
 	for bitboard != 0 {
 		// Find position of least significant bit using De Bruijn multiplication
 		bitPos := trailingZeros(bitboard & -bitboard)
+		positionBit := uint64(1) << bitPos
 
 		row := bitPos >> 3 // Equivalent to bitPos / 8 but faster
 		col := bitPos & 7  // Equivalent to bitPos % 8 but faster
+		pos := Position{Row: int8(row), Col: int8(col)}
 
-		buffer = append(buffer, Position{Row: int8(row), Col: int8(col)})
+		// Categorize position by priority
+		if positionBit&cornerMask != 0 {
+			corners = append(corners, pos)
+		} else if positionBit&edgeMask != 0 {
+			edges = append(edges, pos)
+		} else {
+			interior = append(interior, pos)
+		}
 
 		// Clear the least significant bit
 		bitboard &= bitboard - 1
 	}
 
-	return buffer
+	// Combine in priority order: corners, edges, interior
+	result := make([]Position, 0, len(corners)+len(edges)+len(interior))
+	result = append(result, corners...)
+	result = append(result, edges...)
+	result = append(result, interior...)
+
+	return result
 }
 
 // trailingZeros counts trailing zeros using optimized bit manipulation

@@ -5,24 +5,22 @@ import (
 	"time"
 )
 
+type OperationStats struct {
+	Count int
+	Time  time.Duration
+	Cache map[string]int64 // Cache hits for this operation
+}
+
 // PerformanceStats tracks performance statistics for training
 type PerformanceStats struct {
 	mu         sync.Mutex
-	Operations map[string]*struct {
-		Count int
-		Time  time.Duration
-		Cache map[string]int64
-	}
+	Operations map[string]*OperationStats
 }
 
 // NewPerformanceStats creates a new performance stats tracker
 func NewPerformanceStats() *PerformanceStats {
 	return &PerformanceStats{
-		Operations: make(map[string]*struct {
-			Count int
-			Time  time.Duration
-			Cache map[string]int64
-		}),
+		Operations: make(map[string]*OperationStats),
 	}
 }
 
@@ -30,11 +28,7 @@ func NewPerformanceStats() *PerformanceStats {
 func (s *PerformanceStats) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Operations = make(map[string]*struct {
-		Count int
-		Time  time.Duration
-		Cache map[string]int64
-	})
+	s.Operations = make(map[string]*OperationStats)
 }
 
 // RecordOperation records the time taken for a specific operation
@@ -42,11 +36,7 @@ func (s *PerformanceStats) RecordOperation(name string, duration time.Duration, 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.Operations[name]; !exists {
-		s.Operations[name] = &struct {
-			Count int
-			Time  time.Duration
-			Cache map[string]int64
-		}{
+		s.Operations[name] = &OperationStats{
 			Count: 0,
 			Time:  0,
 			Cache: make(map[string]int64),
