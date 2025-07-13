@@ -33,9 +33,10 @@ logger = logging.getLogger(__name__)
 class ProcessHandler:
     """Classe similaire à pwntools pour gérer les processus avec des pipes robustes"""
     
-    def __init__(self, binary_path, depth, timeout=5.0):
+    def __init__(self, binary_path, depth, mateDepth, timeout=5.0):
         self.binary_path = binary_path
         self.depth = depth
+        self.mateDepth = mateDepth
         self.timeout = timeout
         self.process = None
         self.is_alive = False
@@ -44,7 +45,7 @@ class ProcessHandler:
         """Démarre le processus"""
         try:
             self.process = subprocess.Popen(
-                [self.binary_path, '-depth', str(self.depth)],
+                [self.binary_path, '-depth', str(self.depth), '-mate-depth', str(self.mateDepth)],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
