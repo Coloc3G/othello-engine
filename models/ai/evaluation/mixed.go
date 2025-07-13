@@ -64,16 +64,16 @@ func (e *MixedEvaluation) Evaluate(b game.BitBoard) int16 {
 // Evaluate implements the Evaluation interface for MixedEvaluation
 func (e *MixedEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputation) int16 {
 	if pec.WhitePieces == 0 {
-		return MIN_EVAL
+		return MIN_EVAL - 64
 	}
 	if pec.BlackPieces == 0 {
-		return MAX_EVAL
+		return MAX_EVAL + 64
 	}
 	if pec.IsGameOver {
 		if pec.WhitePieces > pec.BlackPieces {
-			return MAX_EVAL
+			return MAX_EVAL + pec.WhitePieces - pec.BlackPieces
 		} else if pec.WhitePieces < pec.BlackPieces {
-			return MIN_EVAL
+			return MIN_EVAL - pec.BlackPieces + pec.WhitePieces
 		}
 		return 0
 	}
