@@ -31,6 +31,7 @@ func main() {
 
 	debug := flag.Bool("debug", false, "Debug mode")
 	depth := flag.Int("depth", 10, "Search depth for AI evaluation")
+	mateDepth := flag.Int("mate-depth", 21, "Mate Search depth for AI evaluation")
 	flag.Parse()
 
 	evaluator := evaluation.NewMixedEvaluation(evaluation.Models[len(evaluation.Models)-1]) // Use the latest evaluation model
@@ -71,8 +72,8 @@ func main() {
 		if !found {
 
 			var searchDepth = int8(*depth)
-			if len(pos) >= 45 {
-				searchDepth = int8(64 - len(pos))
+			if len(pos) >= 64-*mateDepth {
+				searchDepth = int8(*mateDepth)
 			}
 
 			moves, score := evaluation.Solve(g.Board, g.CurrentPlayer.Color, searchDepth, evaluator)

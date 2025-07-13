@@ -18,6 +18,7 @@ load_dotenv(".env")
 # Configuration depuis les variables d'environnement
 BINARY_PATH = os.getenv("BINARY_PATH")
 DEPTH = int(os.getenv("DEPTH", "10"))  # Profondeur pour l'IA, par défaut 10
+MATE_DEPTH = int(os.getenv("MATE_DEPTH", "21"))  # Profondeur pour la recherche de mat, par défaut 10
 GAMES_CHECK_INTERVAL = int(os.getenv("GAMES_CHECK_INTERVAL", "600"))
 MOVES_CHECK_INTERVAL = int(os.getenv("MOVES_CHECK_INTERVAL", "60"))
 REQUEST_DELAY = int(os.getenv("REQUEST_DELAY", "1"))
@@ -235,10 +236,10 @@ class EothelloBot:
             logger.error(f"Erreur lors de la vérification du moteur : {e}")
             return False
     
-    def get_ai_move(self, position, depth=DEPTH):
+    def get_ai_move(self, position, depth=DEPTH, mateDepth=MATE_DEPTH):
         """Lance un nouveau processus pour obtenir un coup"""
         
-        if depth <= 0:
+        if len(position)+mateDepth<64 and depth <= 0:
             logger.debug("Profondeur maximale atteinte, arrêt de la recherche")
             return None
         
@@ -248,7 +249,7 @@ class EothelloBot:
             
         try:
             # Créer et démarrer un nouveau processus pour chaque coup
-            with ProcessHandler(self.binary_path, depth, timeout=500) as engine:
+            with ProcessHandler(self.binary_path, depth, mateDepth, timeout=500) as engine:
                 if not engine.is_alive:
                     logger.error("Impossible de démarrer le processus du moteur")
                     return None
@@ -265,17 +266,17 @@ class EothelloBot:
                         return move
                     else:
                         logger.debug(f"Format de coup invalide reçu : '{move}'")
-                        return self.get_ai_move(position, depth-1)
+                        return self.get_ai_move(position, depth-1, mateDepth-1)
                 else:
                     logger.debug("Aucun coup reçu du moteur")
-                    return self.get_ai_move(position, depth-1)
+                    return self.get_ai_move(position, depth-1, mateDepth-1)
                     
         except TimeoutError:
             logger.error("Timeout lors de la communication avec le moteur")
-            return self.get_ai_move(position, depth-1)
+            return self.get_ai_move(position, depth-1, mateDepth-1)
         except Exception as e:
             logger.error(f"Erreur lors de la communication avec le moteur : {e}")
-            return self.get_ai_move(position, depth-1)
+            return self.get_ai_move(position, depth-1, mateDepth-1)
     
     def fetch_current_games(self):
         """Récupère la liste des parties en cours"""
