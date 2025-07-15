@@ -7,6 +7,7 @@ import threading
 import os
 import sys
 import select
+import urllib3
 from bs4 import BeautifulSoup
 from datetime import datetime
 import logging
@@ -29,6 +30,10 @@ AUTH_COOKIE = os.getenv("AUTH_COOKIE")
 log_level = getattr(logging, LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Désactiver les logs de debug d'urllib3 pour éviter les messages de reconnexion
+urllib3_logger = logging.getLogger("urllib3.connectionpool")
+urllib3_logger.setLevel(logging.WARNING)
 
 class ProcessHandler:
     """Classe similaire à pwntools pour gérer les processus avec des pipes robustes"""
@@ -195,6 +200,17 @@ class EothelloBot:
         self.base_url = "https://www.eothello.com"
         self.session = requests.Session()
         self.binary_path = binary_path
+        
+        # Configuration de la session pour éviter les messages de reconnexion
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=1,
+            pool_maxsize=1,
+            max_retries=3,
+            pool_block=False
+        )
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
+        
         # Configuration des cookies d'authentification
         self.cookies = {
             'authentication': AUTH_COOKIE,
@@ -282,7 +298,11 @@ class EothelloBot:
     def fetch_current_games(self):
         """Récupère la liste des parties en cours"""
         try:
-            response = self.session.get(f"{self.base_url}/get-player-current-games-list/76887/1")
+            # Créer une nouvelle session pour éviter les problèmes de connexion
+            response = self.session.get(
+                f"{self.base_url}/get-player-current-games-list/76887/1",
+                timeout=30
+            )
             response.raise_for_status()
             
             soup = BeautifulSoup(response.json()['content'], 'html.parser')
@@ -315,11 +335,23 @@ class EothelloBot:
             
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des parties : {e}")
+            # Réinitialiser la session en cas d'erreur
+            self.session.close()
+            self.session = requests.Session()
+            adapter = requests.adapters.HTTPAdapter(
+                pool_connections=1,
+                pool_maxsize=1,
+                max_retries=3,
+                pool_block=False
+            )
+            self.session.mount('https://', adapter)
+            self.session.mount('http://', adapter)
+            self.session.cookies.update(self.cookies)
     
     def parse_game_page(self, game_id):
         """Parse une page de partie pour extraire les informations du jeu"""
         try:
-            response = self.session.get(f"{self.base_url}/game/{game_id}")
+            response = self.session.get(f"{self.base_url}/game/{game_id}", timeout=30)
             response.raise_for_status()
             
             # Chercher le script avec initializeServerGame
@@ -437,7 +469,8 @@ class EothelloBot:
             response = self.session.post(
                 f"{self.base_url}/make-move",
                 headers=self.headers,
-                data=data
+                data=data,
+                timeout=30
             )
             
             response.raise_for_status()
