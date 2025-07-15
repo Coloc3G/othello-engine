@@ -53,6 +53,7 @@ func main() {
 
 		var move game.Position
 		found := false
+		var o opening.Opening
 		if openings := opening.MatchOpening(algebraicPosition); len(openings) > 0 {
 			best := opening.Opening{}
 			for _, opening := range openings {
@@ -64,8 +65,8 @@ func main() {
 			if len(best.Transcript) > len(algebraicPosition) {
 				found = true
 				nextMove := utils.AlgebraicToPosition(best.Transcript[len(algebraicPosition) : len(algebraicPosition)+2])
-
 				move = nextMove
+				o = best
 			}
 
 		}
@@ -85,6 +86,9 @@ func main() {
 			if *debug {
 				fmt.Printf("Depth %d (%d move) ; Score %d ; Continuation %s\n", searchDepth, len(pos), score, utils.PositionsToAlgebraic(moves))
 			}
+		} else if *debug {
+			fmt.Printf("Opening found: %s\n", o.Name)
+
 		}
 
 		fmt.Println(utils.PositionToAlgebraic(move))

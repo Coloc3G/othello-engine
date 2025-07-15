@@ -8,20 +8,31 @@ import (
 	"github.com/Coloc3G/othello-engine/models/utils"
 )
 
-type Cache struct {
-	PECCache   map[string]PreEvaluationComputation
-	ScoreCache map[string]int16
-	MovesCache map[string]map[string]game.BitBoard
+type TTEntry struct {
+	Score int16
+	Depth int8
+	Moves []game.Position
+	Flag  int8 // 0: exact, 1: lower bound, 2: upper bound
 }
 
-// NewCache creates a new cache with PEC priority
-func NewCache() *Cache {
+type Cache struct {
+	TTCache    map[string]TTEntry
+	MaxEntries int
+}
 
+// NewCache creates a new cache with max entries limit
+func NewCache() *Cache {
 	return &Cache{
-		PECCache:   make(map[string]PreEvaluationComputation),
-		ScoreCache: make(map[string]int16),
-		MovesCache: make(map[string]map[string]game.BitBoard),
+		TTCache:    make(map[string]TTEntry),
+		MaxEntries: 20000000,
 	}
+}
+
+func (c *Cache) cacheTTEntry(boardHash string, entry TTEntry) {
+	if len(c.TTCache) >= c.MaxEntries {
+		return
+	}
+	c.TTCache[boardHash] = entry
 }
 
 func Solve(b game.Board, player game.Piece, depth int8, eval Evaluation) ([]game.Position, int16) {
@@ -87,6 +98,9 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 		}
 
 	}
+
+	cache.TTCache = make(map[string]TTEntry, 0)
+
 	return bestMoves, bestScore
 }
 
@@ -100,42 +114,59 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 		perfStats.RecordOperation("hashBoard", pecTime, boardHash)
 	}
 
+	// Check transposition table first
+	if ttEntry, exists := cache.TTCache[boardHash]; exists && ttEntry.Depth >= depth {
+		ttHitStart := time.Now()
+
+		switch ttEntry.Flag {
+		case 0: // Exact value
+			if perfStats != nil {
+				perfStats.RecordOperation("tt_exact_hit", time.Since(ttHitStart), boardHash)
+			}
+			return ttEntry.Score, ttEntry.Moves
+		case 1: // Lower bound
+			if ttEntry.Score >= beta {
+				if perfStats != nil {
+					perfStats.RecordOperation("tt_lower_cutoff", time.Since(ttHitStart), boardHash)
+				}
+				return ttEntry.Score, ttEntry.Moves
+			}
+			if ttEntry.Score > alpha {
+				alpha = ttEntry.Score
+			}
+		case 2: // Upper bound
+			if ttEntry.Score <= alpha {
+				if perfStats != nil {
+					perfStats.RecordOperation("tt_upper_cutoff", time.Since(ttHitStart), boardHash)
+				}
+				return ttEntry.Score, ttEntry.Moves
+			}
+			if ttEntry.Score < beta {
+				beta = ttEntry.Score
+			}
+		}
+
+		if perfStats != nil {
+			perfStats.RecordOperation("tt_partial_hit", time.Since(ttHitStart), boardHash)
+		}
+	}
+
+	originalAlpha := alpha
+	originalBeta := beta
+
 	// Base case: leaf node or terminal position
 	if depth == 0 {
 		// Evaluate position
 		var score int16
+		pecTimeStart := time.Now()
+		pec := PrecomputeEvaluationBitBoard(node)
+		if perfStats != nil {
+			perfStats.RecordOperation("pec", time.Since(pecTimeStart), boardHash)
+		}
 		evalStartTime := time.Now()
-		if cachedScore, exists := cache.ScoreCache[boardHash]; exists {
-			score = cachedScore
-			if perfStats != nil {
-				perfStats.RecordOperation("leaf_eval_cache_hit", time.Since(evalStartTime), boardHash)
-			}
-		} else {
-			var pec PreEvaluationComputation
-			pecTimeStart := time.Now()
-			if c, exists := cache.PECCache[boardHash]; exists {
-				pec = c
-				if perfStats != nil {
-					perfStats.RecordOperation("pec_cache_hit", time.Since(pecTimeStart), boardHash)
-				}
-			} else {
-				pec = PrecomputeEvaluationBitBoard(node)
-				if perfStats != nil {
-					perfStats.RecordOperation("pec", time.Since(pecTimeStart), boardHash)
-				}
-				cache.PECCache[boardHash] = pec
-				cache.MovesCache[boardHash] = make(map[string]game.BitBoard)
-			}
-
-			evalStartTime = time.Now()
-			score = eval.PECEvaluate(node, pec)
-
-			// Track evaluation time
-			if perfStats != nil {
-				perfStats.RecordOperation("leaf_eval", time.Since(evalStartTime), boardHash)
-			}
-
-			cache.ScoreCache[boardHash] = score
+		score = eval.PECEvaluate(node, pec)
+		if perfStats != nil {
+			perfStats.RecordOperation("leaf_eval", time.Since(evalStartTime), boardHash)
 		}
 
 		return score, nil
@@ -157,29 +188,10 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 
 	for _, move := range moves {
 		algebraicMove := utils.PositionToAlgebraic(move)
-		var newNode game.BitBoard
 		moveStart := time.Now()
-		if movesMap, exists := cache.MovesCache[boardHash]; exists {
-			if b, exists := movesMap[algebraicMove]; exists {
-				newNode = b
-				if perfStats != nil {
-					perfStats.RecordOperation("move_cache_hit", time.Since(moveStart), algebraicMove+"-"+boardHash)
-				}
-			} else {
-				newNode, _ = game.GetNewBitBoardAfterMove(node, move, player)
-				if perfStats != nil {
-					perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
-				}
-				movesMap[algebraicMove] = newNode
-
-			}
-		} else {
-			newNode, _ = game.GetNewBitBoardAfterMove(node, move, player)
-			if perfStats != nil {
-				perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
-			}
-			cache.MovesCache[boardHash] = map[string]game.BitBoard{algebraicMove: newNode}
-
+		newNode, _ := game.GetNewBitBoardAfterMove(node, move, player)
+		if perfStats != nil {
+			perfStats.RecordOperation("move", time.Since(moveStart), algebraicMove+"-"+boardHash)
 		}
 		// Recursive evaluation
 		score, childMoves := MMAB(newNode, opponent, depth-1, alpha, beta, eval, cache, perfStats)
@@ -229,6 +241,24 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 		}
 
 	}
+
+	// Store result in transposition table
+	var flag int8
+	if bestScore <= originalAlpha {
+		flag = 2 // Upper bound
+	} else if bestScore >= originalBeta {
+		flag = 1 // Lower bound
+	} else {
+		flag = 0 // Exact value
+	}
+
+	cache.cacheTTEntry(boardHash, TTEntry{
+		Score: bestScore,
+		Depth: depth,
+		Moves: bestMoves[:1],
+		Flag:  flag,
+	})
+
 	return bestScore, bestMoves
 
 }

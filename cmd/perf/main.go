@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"sort"
 	"time"
 
@@ -54,7 +55,7 @@ func generateRandomBoard(numMoves int) (*game.Game, error) {
 	return g, nil
 }
 
-func runBenchmarkWithRandomBoards(depth int8, eval evaluation.Evaluation, numBoards int, numMoves int) {
+func runBenchmarkWithRandomBoards(depth int8, eval evaluation.Evaluation, numBoards int, numMoves int, showStats bool) {
 
 	totalStats := make(map[string]*stats.OperationStats)
 	totalTime := time.Duration(0)
@@ -77,59 +78,89 @@ func runBenchmarkWithRandomBoards(depth int8, eval evaluation.Evaluation, numBoa
 			}
 		}
 
-		boardStats := stats.NewPerformanceStats()
+		var boardStats *stats.PerformanceStats
+		if showStats {
+			boardStats = stats.NewPerformanceStats()
+		} else {
+			boardStats = nil
+		}
+
+		// Get memory stats before
+		var memBefore runtime.MemStats
+		runtime.ReadMemStats(&memBefore)
+
 		start := time.Now()
-		_, _ = evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, depth, eval, boardStats)
+		bestMoves, score := evaluation.SolveWithStats(g.Board, g.CurrentPlayer.Color, depth, eval, boardStats)
 		elapsed := time.Since(start)
+
+		fmt.Printf("Board %d: Best move: %s, Score: %d, Time: %v\n",
+			i+1, utils.PositionsToAlgebraic(bestMoves), score, elapsed)
+
+		// Get memory stats after
+		var memAfter runtime.MemStats
+		runtime.ReadMemStats(&memAfter)
+
 		totalTime += elapsed
+
+		// Calculate memory usage
+		allocDiff := memAfter.Alloc - memBefore.Alloc
+		totalAllocDiff := memAfter.TotalAlloc - memBefore.TotalAlloc
+
+		fmt.Printf("Board %d: %v, Mem: %d KB allocated, %d KB total\n",
+			i+1, elapsed, allocDiff/1024, totalAllocDiff/1024)
 
 		fmt.Printf("Board %d: %v\n", i+1, elapsed)
 
 		// Accumulate stats
-		for opName, opStats := range boardStats.Operations {
-			if totalStats[opName] == nil {
-				totalStats[opName] = &stats.OperationStats{
-					Count: 0,
-					Time:  0,
-					Cache: make(map[string]int64),
+		if showStats {
+			for opName, opStats := range boardStats.Operations {
+				if totalStats[opName] == nil {
+					totalStats[opName] = &stats.OperationStats{
+						Count: 0,
+						Time:  0,
+						Cache: make(map[string]int64),
+					}
 				}
-			}
-			totalStats[opName].Count += opStats.Count
-			totalStats[opName].Time += opStats.Time
+				totalStats[opName].Count += opStats.Count
+				totalStats[opName].Time += opStats.Time
 
-			for hash, hits := range opStats.Cache {
-				totalStats[opName].Cache[hash] += hits
+				for hash, hits := range opStats.Cache {
+					totalStats[opName].Cache[hash] += hits
+				}
+				boardStats.Reset()
 			}
 		}
+
 	}
 
 	fmt.Printf("\n=== AVERAGE RESULTS OVER %d BOARDS ===\n", numBoards)
 	fmt.Printf("Average time: %v\n", totalTime/time.Duration(numBoards))
 	fmt.Printf("Total time: %v\n", totalTime)
+	if showStats {
+		for opName, opStats := range totalStats {
+			fmt.Printf("\nOperation: %s\n", opName)
+			fmt.Printf("  Average count: %.1f\n", float64(opStats.Count)/float64(numBoards))
+			fmt.Printf("  Average time: %v\n", opStats.Time/time.Duration(numBoards))
 
-	for opName, opStats := range totalStats {
-		fmt.Printf("\nOperation: %s\n", opName)
-		fmt.Printf("  Average count: %.1f\n", float64(opStats.Count)/float64(numBoards))
-		fmt.Printf("  Average time: %v\n", opStats.Time/time.Duration(numBoards))
+			// Sort cache hits
+			type cacheStat struct {
+				Hash string
+				Hits int64
+			}
+			var cacheStatsSlice []cacheStat
+			for hash, hits := range opStats.Cache {
+				cacheStatsSlice = append(cacheStatsSlice, cacheStat{Hash: hash, Hits: hits})
+			}
 
-		// Sort cache hits
-		type cacheStat struct {
-			Hash string
-			Hits int64
-		}
-		var cacheStatsSlice []cacheStat
-		for hash, hits := range opStats.Cache {
-			cacheStatsSlice = append(cacheStatsSlice, cacheStat{Hash: hash, Hits: hits})
-		}
+			sort.Slice(cacheStatsSlice, func(i, j int) bool {
+				return cacheStatsSlice[i].Hits > cacheStatsSlice[j].Hits
+			})
 
-		sort.Slice(cacheStatsSlice, func(i, j int) bool {
-			return cacheStatsSlice[i].Hits > cacheStatsSlice[j].Hits
-		})
-
-		fmt.Printf("  Top cache hits (total across all boards):\n")
-		for _, cs := range cacheStatsSlice[:min(5, len(cacheStatsSlice))] {
-			avgHits := float64(cs.Hits) / float64(numBoards)
-			fmt.Printf("    Hash: %s, Total hits: %d, Avg hits: %.1f\n", cs.Hash, cs.Hits, avgHits)
+			fmt.Printf("  Top cache hits (total across all boards):\n")
+			for _, cs := range cacheStatsSlice[:min(5, len(cacheStatsSlice))] {
+				avgHits := float64(cs.Hits) / float64(numBoards)
+				fmt.Printf("    Hash: %s, Total hits: %d, Avg hits: %.1f\n", cs.Hash, cs.Hits, avgHits)
+			}
 		}
 	}
 }
@@ -145,19 +176,14 @@ func main() {
 	eval := evaluation.NewMixedEvaluation(evaluation.V4Coeff)
 
 	if *randomBoards > 0 {
-		runBenchmarkWithRandomBoards(depth, eval, *randomBoards, *randomMoves)
+		runBenchmarkWithRandomBoards(depth, eval, *randomBoards, *randomMoves, *showStats)
 		return
 	}
 
 	// Original fixed board logic
-	board := "c4c3d3e3e2c5f3c2b6c6b4b5d2d1e1f1d6e6a4d7c1b1f2c7f5a3a2b3f4g5g4h4d8g1e8g3g2b8f7g8h5h6"
-
-	// Initialize the game board
-	g := game.NewGame("test", "v4")
-	pos := utils.AlgebraicToPositions(board)
-	err := applyPosition(g, pos)
+	g, err := generateRandomBoard(*randomMoves)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error generating random board:", err)
 		return
 	}
 
