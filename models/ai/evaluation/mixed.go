@@ -115,12 +115,18 @@ func (e *MixedEvaluation) PECEvaluate(b game.BitBoard, pec PreEvaluationComputat
 func (e *MixedEvaluation) ComputeGamePhaseCoefficients(pec PreEvaluationComputation) (int16, int16, int16, int16, int16, int16) {
 	piecesCount := pec.WhitePieces + pec.BlackPieces
 	var phase int
-	if piecesCount < 20 {
+	if piecesCount < 10 {
 		phase = 0 // Early game
-	} else if piecesCount <= 50 {
+	} else if piecesCount <= 20 {
 		phase = 1 // Mid game
+	} else if piecesCount <= 35 {
+		phase = 2 // Mid game
+	} else if piecesCount <= 50 {
+		phase = 3 // Mid game
+	} else if piecesCount <= 55 {
+		phase = 4 // Mid game
 	} else {
-		phase = 2 // Late game
+		phase = 5 // Late game
 	}
 
 	return e.MaterialCoeff[phase],

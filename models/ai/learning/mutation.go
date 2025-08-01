@@ -74,27 +74,26 @@ func MutateCoefficients(coeffs evaluation.EvaluationCoefficients) evaluation.Eva
 func CreateDiverseModel(baseModel EvaluationModel) EvaluationModel {
 	newModel := EvaluationModel{
 		Coeffs: evaluation.EvaluationCoefficients{
-			MaterialCoeffs:  make([]int16, 3),
-			MobilityCoeffs:  make([]int16, 3),
-			CornersCoeffs:   make([]int16, 3),
-			ParityCoeffs:    make([]int16, 3),
-			StabilityCoeffs: make([]int16, 3),
-			FrontierCoeffs:  make([]int16, 3),
+			MaterialCoeffs:  make([]int16, 6),
+			MobilityCoeffs:  make([]int16, 6),
+			CornersCoeffs:   make([]int16, 6),
+			ParityCoeffs:    make([]int16, 6),
+			StabilityCoeffs: make([]int16, 6),
+			FrontierCoeffs:  make([]int16, 6),
 			Name:            "Gen1",
 		},
 	}
 	newModel.Generation = baseModel.Generation + 1
 
-	// Apply random scaling factors with more moderate ranges
-	materialFactor := 0.8 + rand.Float64()*0.4 // 0.8x to 1.2x
-	mobilityFactor := 0.8 + rand.Float64()*0.4
-	cornersFactor := 0.8 + rand.Float64()*0.4
-	parityFactor := 0.8 + rand.Float64()*0.4
-	stabilityFactor := 0.8 + rand.Float64()*0.4
-	frontierFactor := 0.8 + rand.Float64()*0.4
-
 	// Apply factors to all coefficients with bounds checking
-	for i := 0; i < 3; i++ {
+	for i := range 6 {
+		// Apply random scaling factors with more moderate ranges
+		materialFactor := 0.8 + rand.Float64()*0.4 // 0.8x to 1.2x
+		mobilityFactor := 0.8 + rand.Float64()*0.4
+		cornersFactor := 0.8 + rand.Float64()*0.4
+		parityFactor := 0.8 + rand.Float64()*0.4
+		stabilityFactor := 0.8 + rand.Float64()*0.4
+		frontierFactor := 0.8 + rand.Float64()*0.4
 		// Apply the scaling factors with sensible minimum values
 		newModel.Coeffs.MaterialCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.MaterialCoeffs[i])*materialFactor)))
 		newModel.Coeffs.MobilityCoeffs[i] = int16(max(1, int(float64(baseModel.Coeffs.MobilityCoeffs[i])*mobilityFactor)))

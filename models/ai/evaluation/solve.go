@@ -56,12 +56,12 @@ func SolveWithStats(b game.Board, player game.Piece, depth int8, eval Evaluation
 	}
 
 	var bestMoves []game.Position
-	bestScore := MIN_EVAL - 64
+	bestScore := MIN_EVAL - 65
 	if player == game.Black {
-		bestScore = MAX_EVAL + 64
+		bestScore = MAX_EVAL + 65
 	}
-	alpha := MIN_EVAL - 64
-	beta := MAX_EVAL + 64
+	alpha := MIN_EVAL - 65
+	beta := MAX_EVAL + 65
 	opponent := game.GetOtherPlayer(player).Color
 	cache := NewCache() // Cache optimisé avec priorité PEC
 
@@ -180,10 +180,10 @@ func MMAB(node game.BitBoard, player game.Piece, depth int8, alpha, beta int16, 
 	if len(moves) == 0 {
 		return MMAB(node, opponent, depth-1, alpha, beta, eval, cache, perfStats)
 	}
-	var bestMoves []game.Position
-	bestScore := MIN_EVAL - 64
+	bestMoves := []game.Position{moves[0]}
+	bestScore := MIN_EVAL - 65
 	if player == game.Black {
-		bestScore = MAX_EVAL + 64
+		bestScore = MAX_EVAL + 65
 	}
 
 	for _, move := range moves {

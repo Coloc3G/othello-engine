@@ -45,8 +45,8 @@ func PlayMatchWithOpening(
 			pos, _ := evaluation.Solve(g.Board, g.CurrentPlayer.Color, maxDepth, currentEval)
 			if len(pos) == 0 || (len(pos) == 1 && pos[0].Row == -1 && pos[0].Col == -1) {
 				// No valid moves found, skip turn
-				g.CurrentPlayer = game.GetOtherPlayer(g.CurrentPlayer.Color)
-				continue
+				fmt.Printf("No valid moves for %d (%d) game %s\n", g.CurrentPlayer.Color, modelColor, utils.PositionsToAlgebraic(g.History))
+				panic("No valid moves found for player")
 			}
 			g.ApplyMove(pos[0])
 		} else {

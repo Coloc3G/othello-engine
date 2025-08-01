@@ -12,8 +12,8 @@ import (
 func main() {
 	// Parse command-line flags
 	generations := flag.Int("generations", 50, "Number of generations to run")
-	populationSize := flag.Int("population", 20, "Population size")
-	numGames := flag.Int("games", 50, "Number of games per model evaluation")
+	populationSize := flag.Int("population", 50, "Population size")
+	numGames := flag.Int("games", 20, "Number of games per model evaluation")
 	depth := flag.Int("depth", 5, "Search depth for AI")
 	threads := flag.Int("threads", runtime.NumCPU(), "Number of threads to use")
 	baseModel := flag.String("base", "V1", "Base model to use for training (default: V1)")

@@ -26,22 +26,22 @@ func (t *Trainer) tournamentSelect(tournamentSize int) EvaluationModel {
 func (t *Trainer) crossover(parent1, parent2 EvaluationModel) EvaluationModel {
 	child := EvaluationModel{
 		Coeffs: evaluation.EvaluationCoefficients{
-			MaterialCoeffs:  make([]int16, 3),
-			MobilityCoeffs:  make([]int16, 3),
-			CornersCoeffs:   make([]int16, 3),
-			ParityCoeffs:    make([]int16, 3),
-			StabilityCoeffs: make([]int16, 3),
-			FrontierCoeffs:  make([]int16, 3),
+			MaterialCoeffs:  make([]int16, 6),
+			MobilityCoeffs:  make([]int16, 6),
+			CornersCoeffs:   make([]int16, 6),
+			ParityCoeffs:    make([]int16, 6),
+			StabilityCoeffs: make([]int16, 6),
+			FrontierCoeffs:  make([]int16, 6),
 		},
 	}
 
-	// Create crossover patterns that determine which parent each coefficient comes from
-	materialPattern := []bool{true, false, true}
-	mobilityPattern := []bool{false, true, false}
-	cornersPattern := []bool{true, false, true}
-	parityPattern := []bool{false, true, false}
-	stabilityPattern := []bool{true, true, false}
-	frontierPattern := []bool{false, false, true}
+	// Updated crossover patterns for length 6
+	materialPattern := []bool{true, false, true, false, true, false}
+	mobilityPattern := []bool{false, true, false, true, false, true}
+	cornersPattern := []bool{true, true, false, false, true, false}
+	parityPattern := []bool{false, false, true, true, false, true}
+	stabilityPattern := []bool{true, false, true, false, true, false}
+	frontierPattern := []bool{false, true, false, true, false, true}
 
 	// Apply crossover patterns
 	child.Coeffs.MaterialCoeffs = crossoverCoefficients(
